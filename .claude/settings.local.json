@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show python-pptx)",
+      "Bash(pip install python-pptx)",
+      "Bash(python3 -m pip install python-pptx)",
+      "Bash(python3 -c \":*)",
+      "Bash(py --version)",
+      "Bash(py -m pip show python-pptx)",
+      "Bash(/c/Users/deepe/AppData/Local/Microsoft/WindowsApps/python.exe --version)",
+      "Bash(cmd.exe /c \"python --version\")",
+      "Bash(unzip -o \"🏥_병원_예약_&_내부_업무_시스템_—_스토리보드.pptx\" -d /tmp/pptx_extract)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(wc -l \"d:/workspace/hms-doc/4_API_명세서/🏥_병원_예약_&_내부_업무_시스템_—_API_명세서_v5.md\")"
+    ]
+  }
+}

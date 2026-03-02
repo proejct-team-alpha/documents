@@ -1,0 +1,81 @@
+# ==============================================================================
+# Hospital Reservation System - 공통 설정 (Base)
+# ==============================================================================
+# 이 파일은 모든 환경에서 공유되는 공통 설정 템플릿입니다.
+# 환경별 설정은 아래 프로필 파일을 참고하세요.
+#
+#   개발 환경: application-dev.properties.example
+#   운영 환경: application-prod.properties.example
+#
+# 사용 방법:
+#   1. 이 파일을 application.properties로 복사
+#   2. 환경별 파일을 application-dev.properties 또는 application-prod.properties로 복사
+#   3. 실행 시 프로필 활성화: --spring.profiles.active=dev (또는 prod)
+#
+# 주의: *.properties 파일은 .gitignore에 등록하여 Git 커밋을 방지하세요.
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 활성 프로필 설정
+# ------------------------------------------------------------------------------
+# 실행 환경에 맞게 dev 또는 prod로 변경하세요.
+spring.profiles.active=dev
+
+
+# ------------------------------------------------------------------------------
+# 공통 서버 설정
+# ------------------------------------------------------------------------------
+
+# 인코딩 설정
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.force=true
+server.servlet.encoding.enabled=true
+
+# Whitelabel 에러 페이지 비활성화 (커스텀 에러 페이지 사용)
+server.error.whitelabel.enabled=false
+
+
+# ------------------------------------------------------------------------------
+# 공통 JPA 설정
+# ------------------------------------------------------------------------------
+
+# MySQL 드라이버
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# MySQL 방언
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# open-in-view 비활성화 (권장)
+spring.jpa.open-in-view=false
+
+
+# ------------------------------------------------------------------------------
+# 공통 Spring Session 설정
+# ------------------------------------------------------------------------------
+
+# Spring Session 저장소 타입
+spring.session.store-type=redis
+
+# Redis 세션 flush 모드
+spring.session.redis.flush-mode=on-save
+
+
+# ------------------------------------------------------------------------------
+# 공통 Mustache 템플릿 설정
+# ------------------------------------------------------------------------------
+
+# 템플릿 파일 확장자
+spring.mustache.suffix=.mustache
+
+# Request Attributes 노출
+spring.mustache.servlet.expose-request-attributes=true
+
+
+# ------------------------------------------------------------------------------
+# 공통 파일 업로드 제한
+# ------------------------------------------------------------------------------
+
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=20MB
+spring.servlet.multipart.enabled=true

@@ -1,0 +1,207 @@
+# ==============================================================================
+# Hospital Reservation System - 운영 환경 (Production)
+# ==============================================================================
+# 이 파일은 운영 환경용 설정 템플릿입니다.
+# 실제 사용 시 application-prod.properties로 복사한 뒤 값을 수정하세요.
+#
+#   cp application-prod.properties.example application-prod.properties
+#
+# 활성화: application.properties에 spring.profiles.active=prod 추가
+# 주의: application-prod.properties는 .gitignore에 등록하여 Git 커밋을 방지하세요.
+#
+# ⚠ 모든 민감 정보(DB 비밀번호, API 키 등)는 반드시 환경변수로 주입하세요.
+#   환경변수가 설정되지 않으면 애플리케이션이 기동되지 않도록 기본값을 비워둡니다.
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# 1. 서버 설정
+# ------------------------------------------------------------------------------
+
+# 서버 포트
+server.port=${SERVER_PORT:8080}
+
+# 세션 타임아웃 (운영: 30분)
+server.servlet.session.timeout=30m
+
+# Graceful Shutdown (운영 필수: 진행 중 요청 완료 후 종료)
+server.shutdown=graceful
+spring.lifecycle.timeout-per-shutdown-phase=30s
+
+
+# ------------------------------------------------------------------------------
+# 2. 데이터베이스 설정 (MySQL - 운영)
+# ------------------------------------------------------------------------------
+
+# MySQL 접속 URL (운영: SSL 활성화)
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/hospital_db?useSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+
+# MySQL 사용자명 (환경변수 필수)
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+
+# MySQL 비밀번호 (환경변수 필수)
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+
+# MySQL 드라이버
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# HikariCP 커넥션 풀 (운영: 성능 최적화)
+spring.datasource.hikari.maximum-pool-size=20
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=3000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+spring.datasource.hikari.leak-detection-threshold=60000
+
+
+# ------------------------------------------------------------------------------
+# 3. JPA / Hibernate 설정
+# ------------------------------------------------------------------------------
+
+# DDL 자동 관리: validate (운영: 스키마 검증만 수행, 직접 변경 금지)
+spring.jpa.hibernate.ddl-auto=validate
+
+# SQL 로그 출력 (운영: 비활성화)
+spring.jpa.show-sql=false
+
+# SQL 포맷팅 (운영: 비활성화)
+spring.jpa.properties.hibernate.format_sql=false
+
+# MySQL 방언
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# open-in-view 비활성화 (권장)
+spring.jpa.open-in-view=false
+
+# 2차 캐시 (운영 성능 최적화, 필요 시 활성화)
+# spring.jpa.properties.hibernate.cache.use_second_level_cache=true
+# spring.jpa.properties.hibernate.cache.region.factory_class=org.hibernate.cache.jcache.JCacheRegionFactory
+
+
+# ------------------------------------------------------------------------------
+# 4. Redis 세션 저장소 설정 (운영)
+# ------------------------------------------------------------------------------
+
+# Redis 호스트 (환경변수 필수)
+spring.data.redis.host=${SPRING_DATA_REDIS_HOST}
+
+# Redis 포트
+spring.data.redis.port=${SPRING_DATA_REDIS_PORT:6379}
+
+# Redis 비밀번호 (운영 환경에서는 반드시 설정)
+spring.data.redis.password=${SPRING_DATA_REDIS_PASSWORD}
+
+# Redis 커넥션 풀
+spring.data.redis.lettuce.pool.max-active=10
+spring.data.redis.lettuce.pool.max-idle=5
+spring.data.redis.lettuce.pool.min-idle=2
+spring.data.redis.lettuce.pool.max-wait=3000ms
+
+# Redis 타임아웃
+spring.data.redis.timeout=3000ms
+
+# Spring Session 저장소 타입
+spring.session.store-type=redis
+
+# Redis 세션 네임스페이스
+spring.session.redis.namespace=hospital:session:prod
+
+# 세션 타임아웃 (1800초 = 30분)
+spring.session.timeout=1800
+
+# Redis 세션 flush 모드
+spring.session.redis.flush-mode=on-save
+
+
+# ------------------------------------------------------------------------------
+# 5. Mustache 템플릿 설정
+# ------------------------------------------------------------------------------
+
+# 템플릿 파일 확장자
+spring.mustache.suffix=.mustache
+
+# Request Attributes 노출
+spring.mustache.servlet.expose-request-attributes=true
+
+
+# ------------------------------------------------------------------------------
+# 6. Claude API 설정 (LLM)
+# ------------------------------------------------------------------------------
+
+# Claude API 키 (환경변수 필수)
+claude.api.key=${CLAUDE_API_KEY}
+
+# Claude 모델명
+claude.api.model=claude-sonnet-4-6
+
+# API 호출 타임아웃 (운영: 5초)
+claude.api.timeout=5000
+
+# 최대 토큰 수
+claude.api.max-tokens=1024
+
+# Claude API 베이스 URL
+claude.api.base-url=https://api.anthropic.com
+
+# API 버전
+claude.api.version=2023-06-01
+
+
+# ------------------------------------------------------------------------------
+# 7. 파일 업로드 제한
+# ------------------------------------------------------------------------------
+
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=20MB
+spring.servlet.multipart.enabled=true
+
+
+# ------------------------------------------------------------------------------
+# 8. 로깅 설정 (운영: 최소 로그)
+# ------------------------------------------------------------------------------
+
+# 루트 로그 레벨 (운영: WARN)
+logging.level.root=WARN
+
+# Spring 프레임워크
+logging.level.org.springframework=WARN
+
+# Spring Security
+logging.level.org.springframework.security=WARN
+
+# JPA/Hibernate
+logging.level.org.hibernate=WARN
+
+# 애플리케이션 로그 레벨 (운영: INFO)
+logging.level.com.hospital.reservation=INFO
+
+# 로그 파일 출력 (운영 필수)
+logging.file.name=/opt/hospital/logs/hospital-app.log
+logging.file.max-size=50MB
+logging.file.max-history=90
+logging.file.total-size-cap=5GB
+
+# 파일 로그 패턴
+logging.pattern.file=%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+
+# 콘솔 로그 패턴
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+
+
+# ------------------------------------------------------------------------------
+# 9. 에러 페이지 설정 (운영: 최소 정보 노출)
+# ------------------------------------------------------------------------------
+
+# 에러 메시지 포함 (운영: 노출하되 상세 정보 제한)
+server.error.include-message=always
+
+# 스택 트레이스 비포함 (운영: 보안상 절대 노출 금지)
+server.error.include-stacktrace=never
+
+# Whitelabel 에러 페이지 비활성화 (커스텀 에러 페이지 사용)
+server.error.whitelabel.enabled=false
+
+# 인코딩 설정
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.force=true
+server.servlet.encoding.enabled=true
