@@ -29,6 +29,8 @@ erDiagram
         bigint      id              PK
         varchar     name
         varchar     phone
+        date        birth_date
+        char        gender
         varchar     email
         varchar     address
         varchar     note
