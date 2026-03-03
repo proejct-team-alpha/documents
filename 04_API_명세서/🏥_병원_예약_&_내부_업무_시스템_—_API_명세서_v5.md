@@ -2,7 +2,7 @@
 
 > **문서 버전:** v5.0
 > **작성일:** 2026년
-> **변경 이력:** v2.1 (3개 분권, 61개) → v3.0 (단일 문서, 컨트롤러 반환 패턴 전면 개정) → v4.0 (PBL 요구사항 대응 — /api/** JSON API 레이어 추가, @Valid + BindingResult 유효성 검증 패턴 추가, 진료과 activate/deactivate API 정합화, available_days 검증 로직 명시) → **v5.0 (스토리보드 정합 — 내 정보관리 API 추가, 필터 파라미터 보강, 관리자 대시보드 직원수 통계 추가, 상태 전이 권한 스토리보드 기준 통일)**
+> **변경 이력:** v2.1 (3개 분권, 61개) → v3.0 (단일 문서, 컨트롤러 반환 패턴 전면 개정) → v4.0 (PBL 요구사항 대응 — /api/** JSON API 레이어 추가, @Valid + BindingResult 유효성 검증 패턴 추가, 진료과 activate/deactivate API 정합화, available_days 검증 로직 명시) → v5.0 (스토리보드 정합 — 내 정보관리 API 추가, 필터 파라미터 보강, 관리자 대시보드 직원수 통계 추가, 상태 전이 권한 스토리보드 기준 통일) → **v5.1 (ITEM_CATEGORY 테이블 정규화 — 물품 카테고리 CRUD API 7개 추가, 물품 API의 category → categoryId FK 변경)** → **v5.2 (RULE_CATEGORY 테이블 정규화 — 규칙 카테고리 CRUD API 7개 추가, 병원 규칙 API의 category → categoryId FK 변경)**
 > **연관 문서:** 프로젝트 계획서 v4.2 / ERD v2.0 / 화면 정의서 v1.2
 > **기준:** Spring Boot SSR (Mustache) + RPC 스타일 계층형 URL + JSON API 레이어 (/api/**)
 > **인증 방식:** 세션 기반 (Spring Security)
@@ -23,11 +23,13 @@
 10. [관리자 — 인사 관리 API (ROLE_ADMIN)](#10-관리자--인사-관리-api-role_admin)
 11. [관리자 — 진료과 API (ROLE_ADMIN)](#11-관리자--진료과-api-role_admin)
 12. [관리자 — 물품 관리 API (ROLE_ADMIN)](#12-관리자--물품-관리-api-role_admin)
-13. [관리자 — 병원 규칙 API (ROLE_ADMIN)](#13-관리자--병원-규칙-api-role_admin)
-14. [관리자 — 대시보드 API (ROLE_ADMIN)](#14-관리자--대시보드-api-role_admin)
-15. [JSON API 레이어 (/api/**)](#15-json-api-레이어-api)
-16. [에러 코드 정의](#16-에러-코드-정의)
-17. [전체 API 목록 요약](#17-전체-api-목록-요약)
+13. [관리자 — 물품 카테고리 관리 API (ROLE_ADMIN)](#13-관리자--물품-카테고리-관리-api-role_admin)
+14. [관리자 — 규칙 카테고리 관리 API (ROLE_ADMIN)](#14-관리자--규칙-카테고리-관리-api-role_admin)
+15. [관리자 — 병원 규칙 API (ROLE_ADMIN)](#15-관리자--병원-규칙-api-role_admin)
+16. [관리자 — 대시보드 API (ROLE_ADMIN)](#16-관리자--대시보드-api-role_admin)
+17. [JSON API 레이어 (/api/**)](#17-json-api-레이어-api)
+18. [에러 코드 정의](#18-에러-코드-정의)
+19. [전체 API 목록 요약](#19-전체-api-목록-요약)
 
 ---
 
@@ -2063,7 +2065,7 @@ GET /admin/item/list
 
 | 파라미터 | 타입 | 필수 | 설명 |
 |----------|------|------|------|
-| `category` | String | 선택 | 카테고리 필터 |
+| `categoryId` | Long | 선택 | 카테고리 ID 필터 (`ITEM_CATEGORY.id`) |
 | `keyword` | String | 선택 | 물품명 검색 (부분 일치) |
 | `stockStatus` | String | 선택 | 재고 상태 (shortage/normal/all, 기본값: all) |
 
@@ -2074,6 +2076,7 @@ GET /admin/item/list
 | 키 | 타입 | 설명 |
 |----|------|------|
 | `items` | `List<ItemDto>` | 물품 목록 |
+| `categories` | `List<ItemCategoryDto>` | 카테고리 필터 옵션 (`is_active = TRUE`) |
 | `totalCount` | `Integer` | 전체 건수 |
 | `shortageCount` | `Integer` | 재고 부족 건수 |
 | `successMessage` | `String` | Flash — 처리 완료 메시지 |
@@ -2098,7 +2101,7 @@ GET /admin/item/new
 
 | 키 | 타입 | 설명 |
 |----|------|------|
-| `categories` | `List<String>` | 카테고리 옵션 (MEDICAL_SUPPLIES / MEDICAL_EQUIPMENT / GENERAL_SUPPLIES) |
+| `categories` | `List<ItemCategoryDto>` | 카테고리 옵션 (`ITEM_CATEGORY` 테이블, `is_active = TRUE`) |
 | `errorCode` | `String` | Flash — 오류 코드 |
 | `errorMessage` | `String` | Flash — 오류 메시지 |
 | `inputData` | `ItemFormDto` | Flash — 입력값 복원용 |
@@ -2121,7 +2124,7 @@ POST /admin/item/create
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | `name` | String | ✅ | 물품명 |
-| `category` | String | ✅ | MEDICAL_SUPPLIES / MEDICAL_EQUIPMENT / GENERAL_SUPPLIES |
+| `categoryId` | Long | ✅ | 카테고리 ID (`ITEM_CATEGORY.id`) |
 | `quantity` | Integer | ✅ | 현재 수량 |
 | `minQuantity` | Integer | ✅ | 최소 재고 기준 |
 
@@ -2137,6 +2140,7 @@ POST /admin/item/create
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
 | `VALIDATION_ERROR` | `"admin/item/new"` | `errorCode`, `errorMessage`, `inputData`, `categories` |
+| `RESOURCE_NOT_FOUND` | `"admin/item/new"` | `errorCode`, `errorMessage` — 존재하지 않는 categoryId |
 
 ---
 
@@ -2164,7 +2168,7 @@ GET /admin/item/detail
 | 키 | 타입 | 설명 |
 |----|------|------|
 | `item` | `ItemDto` | 물품 상세 정보 |
-| `categories` | `List<String>` | 카테고리 옵션 목록 |
+| `categories` | `List<ItemCategoryDto>` | 카테고리 옵션 목록 (`ITEM_CATEGORY` 테이블, `is_active = TRUE`) |
 | `successMessage` | `String` | Flash — 수정 완료 메시지 |
 | `errorCode` | `String` | Flash — 오류 코드 |
 | `errorMessage` | `String` | Flash — 오류 메시지 |
@@ -2181,7 +2185,7 @@ POST /admin/item/update
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 물품 이름·카테고리·현재 수량·최소 수량 전체 수정 |
+| 설명 | 물품 이름·카테고리(ID)·현재 수량·최소 수량 전체 수정 |
 | 인증 | ROLE_ADMIN |
 
 **Request Body**
@@ -2190,7 +2194,7 @@ POST /admin/item/update
 |------|------|------|------|
 | `itemId` | Long | ✅ | 물품 ID |
 | `name` | String | ✅ | 물품명 (최대 200자) |
-| `category` | String | ✅ | MEDICAL_SUPPLIES / MEDICAL_EQUIPMENT / GENERAL_SUPPLIES |
+| `categoryId` | Long | ✅ | 카테고리 ID (`ITEM_CATEGORY.id`) |
 | `quantity` | Integer | ✅ | 현재 수량 (0 이상) |
 | `minQuantity` | Integer | ✅ | 최소 수량 (0 이상) |
 
@@ -2242,9 +2246,449 @@ POST /admin/item/delete
 
 ---
 
-## 13. 관리자 — 병원 규칙 API (ROLE_ADMIN)
+## 13. 관리자 — 물품 카테고리 관리 API (ROLE_ADMIN)
 
-### 13.1 규칙 목록 화면
+### 13.1 카테고리 목록 화면
+
+```
+GET /admin/category/list
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 물품 카테고리 목록 화면 렌더링 |
+| 인증 | ROLE_ADMIN |
+
+**Query Parameters**
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `keyword` | String | 선택 | 카테고리명 검색 (부분 일치) |
+| `isActive` | Boolean | 선택 | 활성 여부 필터 (기본값: 전체) |
+
+**컨트롤러 반환**: `"admin/category/list"`
+
+**Request Attributes**
+
+| 키 | 타입 | 설명 |
+|----|------|------|
+| `categories` | `List<ItemCategoryDto>` | 카테고리 목록 |
+| `totalCount` | `Integer` | 전체 건수 |
+| `activeCount` | `Integer` | 활성 카테고리 건수 |
+| `successMessage` | `String` | Flash — 처리 완료 메시지 |
+| `errorMessage` | `String` | Flash — 오류 메시지 |
+
+---
+
+### 13.2 카테고리 등록 화면
+
+```
+GET /admin/category/new
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 카테고리 등록 폼 렌더링 |
+| 인증 | ROLE_ADMIN |
+
+**컨트롤러 반환**: `"admin/category/new"`
+
+**Request Attributes**
+
+| 키 | 타입 | 설명 |
+|----|------|------|
+| `errorCode` | `String` | Flash — 오류 코드 |
+| `errorMessage` | `String` | Flash — 오류 메시지 |
+| `inputData` | `CategoryFormDto` | Flash — 입력값 복원용 |
+
+---
+
+### 13.3 카테고리 등록 처리
+
+```
+POST /admin/category/create
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 새 카테고리 등록 |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `name` | String | ✅ | 카테고리명 (최대 50자, UNIQUE) |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/category/list` |
+| Flash | `successMessage` = `"카테고리가 등록되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `VALIDATION_ERROR` | `"admin/category/new"` | `errorCode`, `errorMessage`, `inputData` |
+| `DUPLICATE_ERROR` | `"admin/category/new"` | `errorCode`, `errorMessage`, `inputData` — 중복 카테고리명 |
+
+---
+
+### 13.4 카테고리 상세·수정 화면
+
+```
+GET /admin/category/detail
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 카테고리 상세 정보 조회 및 수정 폼 렌더링 |
+| 인증 | ROLE_ADMIN |
+
+**Query Parameters**
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+
+**컨트롤러 반환**: `"admin/category/detail"`
+
+**Request Attributes**
+
+| 키 | 타입 | 설명 |
+|----|------|------|
+| `category` | `ItemCategoryDto` | 카테고리 상세 정보 |
+| `itemCount` | `Integer` | 해당 카테고리에 속한 물품 수 |
+| `successMessage` | `String` | Flash — 수정 완료 메시지 |
+| `errorCode` | `String` | Flash — 오류 코드 |
+| `errorMessage` | `String` | Flash — 오류 메시지 |
+
+---
+
+### 13.5 카테고리 수정 처리
+
+```
+POST /admin/category/update
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 카테고리명 수정 |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+| `name` | String | ✅ | 카테고리명 (최대 50자, UNIQUE) |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/category/detail?categoryId={categoryId}` |
+| Flash | `successMessage` = `"카테고리가 수정되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `RESOURCE_NOT_FOUND` | `"admin/category/list"` | `errorCode`, `errorMessage` |
+| `VALIDATION_ERROR` | `"admin/category/detail"` | `errorCode`, `errorMessage`, `category` |
+| `DUPLICATE_ERROR` | `"admin/category/detail"` | `errorCode`, `errorMessage`, `category` — 중복 카테고리명 |
+
+---
+
+### 13.6 카테고리 비활성화 처리
+
+```
+POST /admin/category/deactivate
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 카테고리 비활성화 (is_active = FALSE). 카테고리 삭제 대신 비활성화하여 기존 물품의 FK 무결성을 유지한다. |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/category/list` |
+| Flash | `successMessage` = `"카테고리가 비활성화되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `RESOURCE_NOT_FOUND` | `"admin/category/list"` | `errorCode`, `errorMessage` |
+
+---
+
+### 13.7 카테고리 활성화 처리
+
+```
+POST /admin/category/activate
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 비활성화된 카테고리 재활성화 (is_active = TRUE) |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/category/list` |
+| Flash | `successMessage` = `"카테고리가 활성화되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `RESOURCE_NOT_FOUND` | `"admin/category/list"` | `errorCode`, `errorMessage` |
+
+---
+
+## 14. 관리자 — 규칙 카테고리 관리 API (ROLE_ADMIN)
+
+### 14.1 규칙 카테고리 목록 화면
+
+```
+GET /admin/rule-category/list
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 병원 규칙 카테고리 목록 화면 렌더링 |
+| 인증 | ROLE_ADMIN |
+
+**Query Parameters**
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `keyword` | String | 선택 | 카테고리명 검색 (부분 일치) |
+| `isActive` | Boolean | 선택 | 활성 여부 필터 (기본값: 전체) |
+
+**컨트롤러 반환**: `"admin/rule-category/list"`
+
+**Request Attributes**
+
+| 키 | 타입 | 설명 |
+|----|------|------|
+| `categories` | `List<RuleCategoryDto>` | 규칙 카테고리 목록 |
+| `totalCount` | `Integer` | 전체 건수 |
+| `activeCount` | `Integer` | 활성 카테고리 건수 |
+| `successMessage` | `String` | Flash — 처리 완료 메시지 |
+| `errorMessage` | `String` | Flash — 오류 메시지 |
+
+---
+
+### 14.2 규칙 카테고리 등록 화면
+
+```
+GET /admin/rule-category/new
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 규칙 카테고리 등록 폼 렌더링 |
+| 인증 | ROLE_ADMIN |
+
+**컨트롤러 반환**: `"admin/rule-category/new"`
+
+**Request Attributes**
+
+| 키 | 타입 | 설명 |
+|----|------|------|
+| `errorCode` | `String` | Flash — 오류 코드 |
+| `errorMessage` | `String` | Flash — 오류 메시지 |
+| `inputData` | `RuleCategoryFormDto` | Flash — 입력값 복원용 |
+
+---
+
+### 14.3 규칙 카테고리 등록 처리
+
+```
+POST /admin/rule-category/create
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 새 규칙 카테고리 등록 |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `name` | String | ✅ | 카테고리명 (최대 50자, UNIQUE) |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/rule-category/list` |
+| Flash | `successMessage` = `"규칙 카테고리가 등록되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `VALIDATION_ERROR` | `"admin/rule-category/new"` | `errorCode`, `errorMessage`, `inputData` |
+| `DUPLICATE_ERROR` | `"admin/rule-category/new"` | `errorCode`, `errorMessage`, `inputData` — 중복 카테고리명 |
+
+---
+
+### 14.4 규칙 카테고리 상세·수정 화면
+
+```
+GET /admin/rule-category/detail
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 규칙 카테고리 상세 정보 조회 및 수정 폼 렌더링 |
+| 인증 | ROLE_ADMIN |
+
+**Query Parameters**
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+
+**컨트롤러 반환**: `"admin/rule-category/detail"`
+
+**Request Attributes**
+
+| 키 | 타입 | 설명 |
+|----|------|------|
+| `category` | `RuleCategoryDto` | 카테고리 상세 정보 |
+| `ruleCount` | `Integer` | 해당 카테고리에 속한 규칙 수 |
+| `successMessage` | `String` | Flash — 수정 완료 메시지 |
+| `errorCode` | `String` | Flash — 오류 코드 |
+| `errorMessage` | `String` | Flash — 오류 메시지 |
+
+---
+
+### 14.5 규칙 카테고리 수정 처리
+
+```
+POST /admin/rule-category/update
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 규칙 카테고리명 수정 |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+| `name` | String | ✅ | 카테고리명 (최대 50자, UNIQUE) |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/rule-category/detail?categoryId={categoryId}` |
+| Flash | `successMessage` = `"규칙 카테고리가 수정되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `RESOURCE_NOT_FOUND` | `"admin/rule-category/list"` | `errorCode`, `errorMessage` |
+| `VALIDATION_ERROR` | `"admin/rule-category/detail"` | `errorCode`, `errorMessage`, `category` |
+| `DUPLICATE_ERROR` | `"admin/rule-category/detail"` | `errorCode`, `errorMessage`, `category` — 중복 카테고리명 |
+
+---
+
+### 14.6 규칙 카테고리 비활성화 처리
+
+```
+POST /admin/rule-category/deactivate
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 규칙 카테고리 비활성화 (is_active = FALSE). 카테고리 삭제 대신 비활성화하여 기존 규칙의 FK 무결성을 유지한다. |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/rule-category/list` |
+| Flash | `successMessage` = `"규칙 카테고리가 비활성화되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `RESOURCE_NOT_FOUND` | `"admin/rule-category/list"` | `errorCode`, `errorMessage` |
+
+---
+
+### 14.7 규칙 카테고리 활성화 처리
+
+```
+POST /admin/rule-category/activate
+```
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 비활성화된 규칙 카테고리 재활성화 (is_active = TRUE) |
+| 인증 | ROLE_ADMIN |
+
+**Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `categoryId` | Long | ✅ | 카테고리 ID |
+
+**성공 처리**
+
+| 항목 | 내용 |
+|------|------|
+| 반환 | `redirect:/admin/rule-category/list` |
+| Flash | `successMessage` = `"규칙 카테고리가 활성화되었습니다."` |
+
+**오류 처리**
+
+| 오류 코드 | 반환 뷰 | Attribute |
+|-----------|---------|-----------|
+| `RESOURCE_NOT_FOUND` | `"admin/rule-category/list"` | `errorCode`, `errorMessage` |
+
+---
+
+## 15. 관리자 — 병원 규칙 API (ROLE_ADMIN)
+
+### 15.1 규칙 목록 화면
 
 ```
 GET /admin/rule/list
@@ -2259,7 +2703,7 @@ GET /admin/rule/list
 
 | 파라미터 | 타입 | 필수 | 설명 |
 |----------|------|------|------|
-| `category` | String | 선택 | 카테고리 필터 |
+| `categoryId` | Long | 선택 | 카테고리 ID 필터 — `RULE_CATEGORY.id` |
 | `isActive` | Boolean | 선택 | 활성 여부 필터 |
 | `keyword` | String | 선택 | 규칙 제목 검색 (부분 일치) |
 
@@ -2270,6 +2714,7 @@ GET /admin/rule/list
 | 키 | 타입 | 설명 |
 |----|------|------|
 | `rules` | `List<RuleDto>` | 병원 규칙 목록 |
+| `categories` | `List<RuleCategoryDto>` | 활성 규칙 카테고리 목록 (필터 드롭다운용) |
 | `totalCount` | `Integer` | 전체 건수 |
 | `activeCount` | `Integer` | 활성 건수 |
 | `successMessage` | `String` | Flash — 처리 완료 메시지 |
@@ -2277,7 +2722,7 @@ GET /admin/rule/list
 
 ---
 
-### 13.2 규칙 등록 화면
+### 15.2 규칙 등록 화면
 
 ```
 GET /admin/rule/new
@@ -2294,14 +2739,14 @@ GET /admin/rule/new
 
 | 키 | 타입 | 설명 |
 |----|------|------|
-| `categories` | `List<String>` | 카테고리 옵션 (EMERGENCY / SUPPLY / DUTY / HYGIENE / OTHER) |
+| `categories` | `List<RuleCategoryDto>` | 활성 규칙 카테고리 목록 (드롭다운용) |
 | `errorCode` | `String` | Flash — 오류 코드 |
 | `errorMessage` | `String` | Flash — 오류 메시지 |
 | `inputData` | `RuleFormDto` | Flash — 입력값 복원용 |
 
 ---
 
-### 13.3 규칙 등록 처리
+### 15.3 규칙 등록 처리
 
 ```
 POST /admin/rule/create
@@ -2318,7 +2763,7 @@ POST /admin/rule/create
 |------|------|------|------|
 | `title` | String | ✅ | 규칙 제목 (최대 200자) |
 | `content` | String | ✅ | 규칙 본문 텍스트 |
-| `category` | String | ✅ | EMERGENCY / SUPPLY / DUTY / HYGIENE / OTHER |
+| `categoryId` | Long | ✅ | 카테고리 ID — `RULE_CATEGORY.id` |
 
 **성공 처리**
 
@@ -2335,7 +2780,7 @@ POST /admin/rule/create
 
 ---
 
-### 13.4 규칙 상세·수정 화면
+### 15.4 규칙 상세·수정 화면
 
 ```
 GET /admin/rule/detail
@@ -2358,15 +2803,15 @@ GET /admin/rule/detail
 
 | 키 | 타입 | 설명 |
 |----|------|------|
-| `rule` | `RuleDto` | 규칙 정보 |
-| `categories` | `List<String>` | 카테고리 옵션 목록 |
+| `rule` | `RuleDto` | 규칙 정보 (categoryId, categoryName 포함) |
+| `categories` | `List<RuleCategoryDto>` | 활성 규칙 카테고리 목록 (드롭다운용) |
 | `successMessage` | `String` | Flash — 수정/토글 완료 메시지 |
 | `errorCode` | `String` | Flash — 오류 코드 |
 | `errorMessage` | `String` | Flash — 오류 메시지 |
 
 ---
 
-### 13.5 규칙 수정 처리
+### 15.5 규칙 수정 처리
 
 ```
 POST /admin/rule/update
@@ -2384,7 +2829,7 @@ POST /admin/rule/update
 | `ruleId` | Long | ✅ | 규칙 ID |
 | `title` | String | ✅ | 규칙 제목 |
 | `content` | String | ✅ | 규칙 본문 |
-| `category` | String | ✅ | 카테고리 코드 |
+| `categoryId` | Long | ✅ | 카테고리 ID — `RULE_CATEGORY.id` |
 
 **성공 처리**
 
@@ -2402,7 +2847,7 @@ POST /admin/rule/update
 
 ---
 
-### 13.6 규칙 활성화 상태 토글
+### 15.6 규칙 활성화 상태 토글
 
 ```
 POST /admin/rule/toggleActive
@@ -2441,7 +2886,7 @@ POST /admin/rule/toggleActive
 
 ---
 
-### 13.7 규칙 삭제 처리
+### 15.7 규칙 삭제 처리
 
 ```
 POST /admin/rule/delete
@@ -2473,11 +2918,11 @@ POST /admin/rule/delete
 
 ---
 
-## 14. 관리자 — 대시보드 API (ROLE_ADMIN)
+## 16. 관리자 — 대시보드 API (ROLE_ADMIN)
 
 > `GET /admin/dashboard` 및 `GET /admin/dashboard/stats` 는 [9.1](#91-관리자-대시보드-화면), [9.2](#92-대시보드-통계-조회-ajax) 를 참조하세요.
 
-### 14.3 관리자 내 정보관리 화면
+### 15.3 관리자 내 정보관리 화면
 
 ```
 GET /admin/mypage
@@ -2500,7 +2945,7 @@ GET /admin/mypage
 
 ---
 
-### 14.4 관리자 내 정보 수정 처리
+### 15.4 관리자 내 정보 수정 처리
 
 ```
 POST /admin/mypage/update
@@ -2536,11 +2981,11 @@ POST /admin/mypage/update
 
 ---
 
-## 15. JSON API 레이어 (/api/**)
+## 17. JSON API 레이어 (/api/**)
 
 > PBL 최소 요구사항 충족을 위한 JSON API 엔드포인트. 모든 응답은 JSON `@ResponseBody`이며, Path Variable로 ID를 전달한다.
 
-### 15.1 직원 정보 수정
+### 17.1 직원 정보 수정
 
 ```
 POST /api/staff/{id}/update
@@ -2602,7 +3047,7 @@ POST /api/staff/{id}/update
 
 ---
 
-### 15.2 환자 정보 부분 수정
+### 17.2 환자 정보 부분 수정
 
 ```
 POST /api/patients/{id}/update
@@ -2666,7 +3111,7 @@ POST /api/patients/{id}/update
 
 ---
 
-### 15.3 예약 취소
+### 17.3 예약 취소
 
 ```
 POST /api/reservations/{id}/cancel
@@ -2703,7 +3148,7 @@ POST /api/reservations/{id}/cancel
 
 ---
 
-### 15.4 물품 삭제
+### 17.4 물품 삭제
 
 ```
 POST /api/items/{id}/delete
@@ -2738,7 +3183,7 @@ POST /api/items/{id}/delete
 
 ---
 
-### 15.5 규칙 삭제
+### 17.5 규칙 삭제
 
 ```
 POST /api/rules/{id}/delete
@@ -2773,9 +3218,9 @@ POST /api/rules/{id}/delete
 
 ---
 
-## 16. 에러 코드 정의
+## 18. 에러 코드 정의
 
-### 16.1 예약 관련
+### 18.1 예약 관련
 
 | 에러 코드 | HTTP 상태 | 설명 | SSR 처리 |
 |-----------|-----------|------|----------|
@@ -2785,7 +3230,7 @@ POST /api/rules/{id}/delete
 | `RESERVATION_NOT_FOUND` | `404` | 예약 ID 없음 | 목록 화면 + `errorMessage` Flash |
 | `CANNOT_CANCEL_COMPLETED` | `409` | 진료 완료 예약 취소 불가 | 목록 화면 + `errorMessage` Flash |
 
-### 16.2 상태 전이 관련
+### 18.2 상태 전이 관련
 
 | 에러 코드 | HTTP 상태 | 설명 | SSR 처리 |
 |-----------|-----------|------|----------|
@@ -2793,7 +3238,7 @@ POST /api/rules/{id}/delete
 | `ALREADY_CANCELLED` | `409` | 이미 취소된 예약 | 목록 화면 + Flash |
 | `ALREADY_COMPLETED` | `409` | 이미 완료된 예약 | 목록 화면 + Flash |
 
-### 16.3 인증·권한 관련
+### 18.3 인증·권한 관련
 
 | 에러 코드 | HTTP 상태 | 설명 | SSR 처리 |
 |-----------|-----------|------|----------|
@@ -2802,14 +3247,14 @@ POST /api/rules/{id}/delete
 | `NOT_OWN_PATIENT` | `403` | 본인 담당이 아닌 환자 접근 | 목록 화면 + `errorMessage` Flash |
 | `INVALID_PASSWORD` | `400` | 현재 비밀번호 불일치 | 마이페이지 폼 재렌더링 |
 
-### 16.4 LLM 관련 (AJAX — JSON 응답 유지)
+### 18.4 LLM 관련 (AJAX — JSON 응답 유지)
 
 | 에러 코드 | HTTP 상태 | 설명 |
 |-----------|-----------|------|
 | `LLM_SERVICE_UNAVAILABLE` | `503` | Claude API 호출 실패 / 타임아웃 |
 | `LLM_PARSE_ERROR` | `500` | LLM 응답 JSON 파싱 오류 |
 
-### 16.5 데이터 관련
+### 18.5 데이터 관련
 
 | 에러 코드 | HTTP 상태 | 설명 | SSR 처리 |
 |-----------|-----------|------|----------|
@@ -2819,9 +3264,9 @@ POST /api/rules/{id}/delete
 
 ---
 
-## 17. 전체 API 목록 요약
+## 19. 전체 API 목록 요약
 
-**총 75개 엔드포인트 | GET 35개 · POST 40개**
+**총 89개 엔드포인트 | GET 41개 · POST 48개**
 
 ### 비회원 / 공통 (인증 불필요)
 
@@ -2931,27 +3376,51 @@ POST /api/rules/{id}/delete
 | 62 | POST | `/admin/item/update` | redirect or 폼재렌더링 | 물품 전체 수정 처리 |
 | 63 | POST | `/admin/item/delete` | redirect | 물품 삭제 처리 |
 
+### ROLE_ADMIN — 물품 카테고리 관리
+
+| # | 메서드 | URL | 반환 | 설명 |
+|---|--------|-----|------|------|
+| 64 | GET | `/admin/category/list` | `"admin/category/list"` | 물품 카테고리 목록 화면 |
+| 65 | GET | `/admin/category/new` | `"admin/category/new"` | 물품 카테고리 등록 화면 |
+| 66 | POST | `/admin/category/create` | redirect or 폼재렌더링 | 물품 카테고리 등록 처리 |
+| 67 | GET | `/admin/category/detail` | `"admin/category/detail"` | 물품 카테고리 상세·수정 화면 |
+| 68 | POST | `/admin/category/update` | redirect or 폼재렌더링 | 물품 카테고리 수정 처리 |
+| 69 | POST | `/admin/category/deactivate` | redirect | 물품 카테고리 비활성화 처리 |
+| 70 | POST | `/admin/category/activate` | redirect | 물품 카테고리 활성화 처리 |
+
+### ROLE_ADMIN — 규칙 카테고리 관리
+
+| # | 메서드 | URL | 반환 | 설명 |
+|---|--------|-----|------|------|
+| 71 | GET | `/admin/rule-category/list` | `"admin/rule-category/list"` | 규칙 카테고리 목록 화면 |
+| 72 | GET | `/admin/rule-category/new` | `"admin/rule-category/new"` | 규칙 카테고리 등록 화면 |
+| 73 | POST | `/admin/rule-category/create` | redirect or 폼재렌더링 | 규칙 카테고리 등록 처리 |
+| 74 | GET | `/admin/rule-category/detail` | `"admin/rule-category/detail"` | 규칙 카테고리 상세·수정 화면 |
+| 75 | POST | `/admin/rule-category/update` | redirect or 폼재렌더링 | 규칙 카테고리 수정 처리 |
+| 76 | POST | `/admin/rule-category/deactivate` | redirect | 규칙 카테고리 비활성화 처리 |
+| 77 | POST | `/admin/rule-category/activate` | redirect | 규칙 카테고리 활성화 처리 |
+
 ### ROLE_ADMIN — 병원 규칙 관리
 
 | # | 메서드 | URL | 반환 | 설명 |
 |---|--------|-----|------|------|
-| 64 | GET | `/admin/rule/list` | `"admin/rule/list"` | 병원 규칙 목록 화면 |
-| 65 | GET | `/admin/rule/new` | `"admin/rule/new"` | 병원 규칙 등록 화면 |
-| 66 | POST | `/admin/rule/create` | redirect or 폼재렌더링 | 규칙 등록 처리 |
-| 67 | GET | `/admin/rule/detail` | `"admin/rule/detail"` | 병원 규칙 상세·수정 화면 |
-| 68 | POST | `/admin/rule/update` | redirect or 폼재렌더링 | 규칙 수정 처리 |
-| 69 | POST | `/admin/rule/toggleActive` | redirect | 규칙 활성화 토글 |
-| 70 | POST | `/admin/rule/delete` | redirect | 규칙 삭제 처리 |
+| 78 | GET | `/admin/rule/list` | `"admin/rule/list"` | 병원 규칙 목록 화면 |
+| 79 | GET | `/admin/rule/new` | `"admin/rule/new"` | 병원 규칙 등록 화면 |
+| 80 | POST | `/admin/rule/create` | redirect or 폼재렌더링 | 규칙 등록 처리 |
+| 81 | GET | `/admin/rule/detail` | `"admin/rule/detail"` | 병원 규칙 상세·수정 화면 |
+| 82 | POST | `/admin/rule/update` | redirect or 폼재렌더링 | 규칙 수정 처리 |
+| 83 | POST | `/admin/rule/toggleActive` | redirect | 규칙 활성화 토글 |
+| 84 | POST | `/admin/rule/delete` | redirect | 규칙 삭제 처리 |
 
 ### JSON API 레이어 (/api/**)
 
 | # | 메서드 | URL | 반환 | 설명 |
 |---|--------|-----|------|------|
-| 71 | POST | `/api/staff/{id}/update` | JSON | 직원 정보 수정 |
-| 72 | POST | `/api/patients/{id}/update` | JSON | 환자 정보 수정 |
-| 73 | POST | `/api/reservations/{id}/cancel` | JSON | 예약 취소 |
-| 74 | POST | `/api/items/{id}/delete` | JSON | 물품 삭제 |
-| 75 | POST | `/api/rules/{id}/delete` | JSON | 규칙 삭제 |
+| 85 | POST | `/api/staff/{id}/update` | JSON | 직원 정보 수정 |
+| 86 | POST | `/api/patients/{id}/update` | JSON | 환자 정보 수정 |
+| 87 | POST | `/api/reservations/{id}/cancel` | JSON | 예약 취소 |
+| 88 | POST | `/api/items/{id}/delete` | JSON | 물품 삭제 |
+| 89 | POST | `/api/rules/{id}/delete` | JSON | 규칙 삭제 |
 
 ---
 
@@ -2981,6 +3450,6 @@ POST /api/rules/{id}/delete
 
 ---
 
-*본 API 명세서는 프로젝트 계획서 v4.2, ERD v2.0, 화면 정의서 v2.0을 기반으로 작성되었습니다.*
+*본 API 명세서는 프로젝트 계획서 v4.2, ERD v4.0 (ITEM_CATEGORY + RULE_CATEGORY 테이블 추가), 화면 정의서 v2.0을 기반으로 작성되었습니다.*
 *변경 발생 시 GitHub Wiki에서 버전 이력을 관리합니다.*</content>
 </invoke>

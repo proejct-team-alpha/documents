@@ -3,7 +3,7 @@
 > **문서 버전:** v4.0 (스토리보드 정합 반영)
 **작성일:** 2026년
 **연관 문서:** 프로젝트 계획서 v4.1 / 화면 흐름 시퀀스 다이어그램 / 스토리보드 v1
-**변경 내역:** STAFF.employee_number 추가, TREATMENT_RECORD 필드 3분할, PATIENT.updated_at 추가, ITEM.created_at 추가, HOSPITAL_RULE.content 3000자 제한 명시, 예약 상태 전이 권한 스토리보드 기준 통일
+**변경 내역:** STAFF.employee_number 추가, TREATMENT_RECORD 필드 3분할, PATIENT.updated_at 추가, ITEM.created_at 추가, HOSPITAL_RULE.content 3000자 제한 명시, 예약 상태 전이 권한 스토리보드 기준 통일, **ITEM_CATEGORY 테이블 신규 추가 및 ITEM.category → category_id FK 정규화**, **RULE_CATEGORY 테이블 신규 추가 및 HOSPITAL_RULE.category → category_id FK 정규화**
 >
 
 ---
@@ -88,12 +88,28 @@ erDiagram
         datetime    created_at
     }
 
+    ITEM_CATEGORY {
+        bigint      id              PK
+        varchar     name
+        boolean     is_active
+        datetime    created_at
+        datetime    updated_at
+    }
+
     ITEM {
         bigint      id              PK
         varchar     name
-        varchar     category
+        bigint      category_id     FK
         int         quantity
         int         min_quantity
+        datetime    created_at
+        datetime    updated_at
+    }
+
+    RULE_CATEGORY {
+        bigint      id              PK
+        varchar     name
+        boolean     is_active
         datetime    created_at
         datetime    updated_at
     }
@@ -102,7 +118,7 @@ erDiagram
         bigint      id              PK
         varchar     title
         text        content
-        varchar     category
+        bigint      category_id     FK
         boolean     is_active
         datetime    created_at
         datetime    updated_at
@@ -136,6 +152,8 @@ erDiagram
     STAFF               ||--||    DOCTOR              : "1 : 1"
     STAFF               }o--||    DEPARTMENT          : "N : 1"
     DEPARTMENT          ||--o{    DOCTOR              : "1 : N"
+    ITEM_CATEGORY       ||--o{    ITEM                : "1 : N"
+    RULE_CATEGORY       ||--o{    HOSPITAL_RULE       : "1 : N"
     STAFF               ||--o{    CHATBOT_HISTORY     : "1 : N"
 ```
 
@@ -317,7 +335,38 @@ LLM_RECOMMENDATION.is_used = TRUE 로 업데이트
 
 ---
 
-### 2.7 ITEM — 물품 (재고)
+### 2.7 ITEM_CATEGORY — 물품 카테고리 ★ 신규 (v4.1)
+
+> 물품(`ITEM`)의 카테고리를 관리하는 코드 테이블.
+기존 `ITEM.category` VARCHAR 컬럼의 하드코딩 방식을 정규화하여, 관리자(`ROLE_ADMIN`)가 카테고리를 동적으로 추가·수정·비활성화할 수 있도록 분리하였다.
+>
+
+| 컬럼명 | 타입 | 제약 | 설명 |
+| --- | --- | --- | --- |
+| `id` | BIGINT | PK, AUTO_INCREMENT | 카테고리 고유 ID |
+| `name` | VARCHAR(50) | NOT NULL, UNIQUE | 카테고리명 (예: 의료 소모품, 의료 장비) |
+| `is_active` | BOOLEAN | NOT NULL, DEFAULT TRUE | 사용 여부 — FALSE 시 물품 등록 화면에서 선택 제외 |
+| `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 등록 일시 |
+| `updated_at` | DATETIME | NOT NULL | 수정 일시 |
+
+**설계 포인트**
+
+- 물품 등록·수정 화면의 카테고리 드롭다운에는 `is_active = TRUE`인 카테고리만 노출한다.
+- 카테고리 삭제 대신 `is_active = FALSE`로 비활성화하여, 기존 물품의 FK 무결성을 유지한다.
+- 초기 데이터: `의료 소모품(MEDICAL_SUPPLIES)`, `의료 장비(MEDICAL_EQUIPMENT)`, `일반 소모품(GENERAL_SUPPLIES)` 3건을 시드 데이터로 INSERT한다.
+
+**초기 시드 데이터**
+
+```sql
+INSERT INTO item_category (name, is_active, created_at, updated_at) VALUES
+('의료 소모품', TRUE, NOW(), NOW()),
+('의료 장비',   TRUE, NOW(), NOW()),
+('일반 소모품', TRUE, NOW(), NOW());
+```
+
+---
+
+### 2.8 ITEM — 물품 (재고)
 
 > 병원 내 물품 및 재고 정보. 단순 수량 관리만 지원한다. (입출고 로그는 v1.1 확장 예정)
 >
@@ -326,7 +375,7 @@ LLM_RECOMMENDATION.is_used = TRUE 로 업데이트
 | --- | --- | --- | --- |
 | `id` | BIGINT | PK, AUTO_INCREMENT | 물품 고유 ID |
 | `name` | VARCHAR(100) | NOT NULL | 물품명 |
-| `category` | VARCHAR(50) | NOT NULL | 카테고리 코드 — 아래 코드 정의 참조 |
+| `category_id` | BIGINT | FK, NOT NULL | 카테고리 참조 — `ITEM_CATEGORY.id` |
 | `quantity` | INT | NOT NULL, DEFAULT 0 | 현재 재고 수량 |
 | `min_quantity` | INT | NOT NULL, DEFAULT 0 | 최소 재고 기준 (부족 판단 기준) |
 | `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 물품 등록 일시 |
@@ -341,7 +390,41 @@ SELECT COUNT(*) FROM item WHERE quantity < min_quantity
 
 ---
 
-### 2.8 HOSPITAL_RULE — 병원 규칙 문서 ★ 신규 (v4.1)
+### 2.9 RULE_CATEGORY — 병원 규칙 카테고리 ★ 신규 (v4.2)
+
+> 병원 규칙(`HOSPITAL_RULE`)의 카테고리를 관리하는 코드 테이블.
+기존 `HOSPITAL_RULE.category` VARCHAR 컬럼의 하드코딩 방식을 정규화하여, 관리자(`ROLE_ADMIN`)가 카테고리를 동적으로 추가·수정·비활성화할 수 있도록 분리하였다.
+>
+
+| 컬럼명 | 타입 | 제약 | 설명 |
+| --- | --- | --- | --- |
+| `id` | BIGINT | PK, AUTO_INCREMENT | 카테고리 고유 ID |
+| `name` | VARCHAR(50) | NOT NULL, UNIQUE | 카테고리명 (예: 응급 처치, 당직·근무) |
+| `is_active` | BOOLEAN | NOT NULL, DEFAULT TRUE | 사용 여부 — FALSE 시 규칙 등록 화면에서 선택 제외 |
+| `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 등록 일시 |
+| `updated_at` | DATETIME | NOT NULL | 수정 일시 |
+
+**설계 포인트**
+
+- 규칙 등록·수정 화면의 카테고리 드롭다운에는 `is_active = TRUE`인 카테고리만 노출한다.
+- 카테고리 삭제 대신 `is_active = FALSE`로 비활성화하여, 기존 규칙의 FK 무결성을 유지한다.
+- 챗봇 시스템 프롬프트 주입 시 `RULE_CATEGORY.name`을 카테고리 구분자로 활용한다.
+- 초기 데이터: `응급 처치(EMERGENCY)`, `물품·비품(SUPPLY)`, `당직·근무(DUTY)`, `위생·감염(HYGIENE)`, `기타(OTHER)` 5건을 시드 데이터로 INSERT한다.
+
+**초기 시드 데이터**
+
+```sql
+INSERT INTO rule_category (name, is_active, created_at, updated_at) VALUES
+('응급 처치', TRUE, NOW(), NOW()),
+('물품·비품', TRUE, NOW(), NOW()),
+('당직·근무', TRUE, NOW(), NOW()),
+('위생·감염', TRUE, NOW(), NOW()),
+('기타',      TRUE, NOW(), NOW());
+```
+
+---
+
+### 2.10 HOSPITAL_RULE — 병원 규칙 문서 ★ 수정 (v4.2)
 
 > 관리자(`ROLE_ADMIN`)가 등록·관리하는 병원 내부 규칙 문서.
 `ROLE_DOCTOR` · `ROLE_NURSE`의 Q&A 챗봇 시스템 프롬프트 컨텍스트로 사용된다.
@@ -352,7 +435,7 @@ SELECT COUNT(*) FROM item WHERE quantity < min_quantity
 | `id` | BIGINT | PK, AUTO_INCREMENT | 규칙 고유 ID |
 | `title` | VARCHAR(200) | NOT NULL | 규칙 제목 (예: 응급 처치 절차) |
 | `content` | TEXT | NOT NULL | 규칙 본문 텍스트 |
-| `category` | VARCHAR(50) | NOT NULL | 카테고리 코드 — 아래 코드 정의 참조 |
+| `category_id` | BIGINT | FK, NOT NULL | 카테고리 참조 — `RULE_CATEGORY.id` |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT TRUE | 챗봇 컨텍스트 포함 여부 — FALSE 시 프롬프트에서 제외 |
 | `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 등록 일시 |
 | `updated_at` | DATETIME | NOT NULL | 수정 일시 |
@@ -360,27 +443,22 @@ SELECT COUNT(*) FROM item WHERE quantity < min_quantity
 **설계 포인트**
 
 - `content`는 애플리케이션 레벨에서 최대 3000자 제한을 적용한다. DB 컬럼 타입은 TEXT를 유지하되, Service 레이어에서 입력값 검증(validation)으로 3000자를 초과하지 않도록 차단한다.
+- `category_id`는 `RULE_CATEGORY.id`를 참조하는 외래 키이며, ON DELETE RESTRICT로 카테고리에 규칙이 존재하는 한 삭제를 차단한다.
 
 **챗봇 프롬프트 주입 방식**
 
 ```sql
 -- LlmService에서 챗봇 호출 시 아래 쿼리로 규칙 전체를 조회하여 시스템 프롬프트에 주입
-SELECT title, content FROM hospital_rule WHERE is_active = TRUE ORDER BY category
+SELECT hr.title, hr.content, rc.name AS category_name
+FROM hospital_rule hr
+JOIN rule_category rc ON hr.category_id = rc.id
+WHERE hr.is_active = TRUE
+ORDER BY rc.name
 ```
-
-**카테고리 코드 (HOSPITAL_RULE.category)**
-
-| 값 | 설명 |
-| --- | --- |
-| `EMERGENCY` | 응급 처치 관련 규칙 |
-| `SUPPLY` | 물품·비품 보관 위치 |
-| `DUTY` | 당직·근무 관련 규정 |
-| `HYGIENE` | 감염 예방·위생 수칙 |
-| `OTHER` | 기타 규칙 |
 
 ---
 
-### 2.9 LLM_RECOMMENDATION — 증상 추천 이력 ★ 신규 (v4.1)
+### 2.11 LLM_RECOMMENDATION — 증상 추천 이력 ★ 신규 (v4.1)
 
 > 환자의 증상 분석 요청과 LLM 추천 결과를 기록하는 이력 테이블.
 실제 예약으로 이어졌는지 추적하여 추후 추천 품질 개선에 활용한다.
@@ -407,7 +485,7 @@ SELECT title, content FROM hospital_rule WHERE is_active = TRUE ORDER BY categor
 
 ---
 
-### 2.10 CHATBOT_HISTORY — 챗봇 대화 이력 ★ 신규 (v3.0)
+### 2.12 CHATBOT_HISTORY — 챗봇 대화 이력 ★ 신규 (v3.0)
 
 > 의사(`ROLE_DOCTOR`)·간호사(`ROLE_NURSE`)가 병원 규칙 Q&A 챗봇을 사용할 때 발생하는 대화 이력을 저장하는 테이블.
 세션 단위로 대화 이력을 관리하며, 로그아웃 시 이력은 DB에 보존되고 다음 로그인 시 새 세션 ID로 시작한다.
@@ -446,7 +524,8 @@ SELECT title, content FROM hospital_rule WHERE is_active = TRUE ORDER BY categor
 | `DEPARTMENT` → `DOCTOR` | 1:N | 한 진료과에 여러 의사 소속 |
 | `DEPARTMENT` → `STAFF` | 1:N | 한 진료과에 여러 직원 소속 |
 | `STAFF` → `CHATBOT_HISTORY` | 1:N | 한 직원이 여러 챗봇 대화 이력을 가진다 |
-| `HOSPITAL_RULE` | 독립 | 다른 테이블과 FK 없음. 챗봇 컨텍스트 전용 |
+| `ITEM_CATEGORY` → `ITEM` | 1:N | 한 카테고리에 여러 물품이 속한다 |
+| `RULE_CATEGORY` → `HOSPITAL_RULE` | 1:N | 한 카테고리에 여러 병원 규칙이 속한다 |
 | `LLM_RECOMMENDATION` | 독립 | 다른 테이블과 FK 없음. 추천 이력 전용 |
 
 ### 3.2 외래 키(FK) 목록
@@ -461,6 +540,8 @@ SELECT title, content FROM hospital_rule WHERE is_active = TRUE ORDER BY categor
 | `RESERVATION` | `department_id` | `DEPARTMENT` | `id` | RESTRICT |
 | `TREATMENT_RECORD` | `reservation_id` | `RESERVATION` | `id` | CASCADE |
 | `TREATMENT_RECORD` | `doctor_id` | `DOCTOR` | `id` | RESTRICT |
+| `ITEM` | `category_id` | `ITEM_CATEGORY` | `id` | RESTRICT |
+| `HOSPITAL_RULE` | `category_id` | `RULE_CATEGORY` | `id` | RESTRICT |
 | `CHATBOT_HISTORY` | `staff_id` | `STAFF` | `id` | CASCADE |
 
 ---
@@ -512,23 +593,35 @@ CANCELLED → 어떤 상태  : 금지 — 취소 후 복구 불가
 | `NURSE` | 간호사 | `/nurse/**` | 규칙 Q&A 챗봇 사용 |
 | `STAFF` | 원무/접수 | `/staff/**` | 없음 (v1.1 예정) |
 
-### 4.4 ITEM.category 코드
+### 4.4 ITEM 카테고리 (ITEM_CATEGORY 테이블 관리)
 
-| 값 | 설명 |
-| --- | --- |
-| `MEDICAL_SUPPLIES` | 의료 소모품 |
-| `MEDICAL_EQUIPMENT` | 의료 장비 |
-| `GENERAL_SUPPLIES` | 일반 소모품 |
+> v4.0까지는 `ITEM.category` VARCHAR 컬럼에 하드코딩된 코드 값으로 관리하였으나,
+> v4.1부터 `ITEM_CATEGORY` 테이블로 정규화하여 동적 관리가 가능하도록 변경하였다.
+> 아래는 초기 시드 데이터로 등록되는 기본 카테고리이다.
 
-### 4.5 HOSPITAL_RULE.category 코드
+| 초기 카테고리명 | 설명 | 비고 |
+| --- | --- | --- |
+| `의료 소모품` | 주사기, 거즈, 소독약 등 | 시드 데이터 |
+| `의료 장비` | 혈압계, 체온계, 심전도기 등 | 시드 데이터 |
+| `일반 소모품` | 사무용품, 청소용품 등 | 시드 데이터 |
 
-| 값 | 설명 |
-| --- | --- |
-| `EMERGENCY` | 응급 처치 규칙 |
-| `SUPPLY` | 물품·비품 보관 위치 |
-| `DUTY` | 당직·근무 규정 |
-| `HYGIENE` | 감염 예방·위생 수칙 |
-| `OTHER` | 기타 |
+- 관리자(`ROLE_ADMIN`)가 카테고리 관리 화면에서 추가·수정·비활성화 가능
+
+### 4.5 HOSPITAL_RULE 카테고리 (RULE_CATEGORY 테이블 관리)
+
+> v4.1까지는 `HOSPITAL_RULE.category` VARCHAR 컬럼에 하드코딩된 코드 값으로 관리하였으나,
+> v4.2부터 `RULE_CATEGORY` 테이블로 정규화하여 동적 관리가 가능하도록 변경하였다.
+> 아래는 초기 시드 데이터로 등록되는 기본 카테고리이다.
+
+| 초기 카테고리명 | 설명 | 비고 |
+| --- | --- | --- |
+| `응급 처치` | 응급 처치 관련 규칙 | 시드 데이터 |
+| `물품·비품` | 물품·비품 보관 위치 | 시드 데이터 |
+| `당직·근무` | 당직·근무 관련 규정 | 시드 데이터 |
+| `위생·감염` | 감염 예방·위생 수칙 | 시드 데이터 |
+| `기타` | 기타 규칙 | 시드 데이터 |
+
+- 관리자(`ROLE_ADMIN`)가 카테고리 관리 화면에서 추가·수정·비활성화 가능
 
 ### 4.6 RESERVATION.source 코드
 
@@ -550,6 +643,10 @@ CANCELLED → 어떤 상태  : 금지 — 취소 후 복구 불가
 | ITEM.created_at | 없음 | **컬럼 추가** (DATETIME, NOT NULL, DEFAULT NOW()) | 물품 등록 일시 기록 |
 | HOSPITAL_RULE.content | 제한 없음 | **최대 3000자** (Service 레이어 검증) | 애플리케이션 레벨 입력 제한 명시 |
 | 예약 상태 전이 권한 | RESERVED→RECEIVED: STAFF/ADMIN, RECEIVED→COMPLETED: DOCTOR/ADMIN, →CANCELLED: STAFF/ADMIN | RESERVED→RECEIVED: **STAFF only**, RECEIVED→COMPLETED: **DOCTOR only**, →CANCELLED: **ADMIN only** | 스토리보드 기준 역할별 권한 통일 |
+| **ITEM_CATEGORY 테이블** | 없음 | **테이블 신규 추가** (id, name, is_active, created_at, updated_at) | 물품 카테고리 동적 관리를 위해 정규화 |
+| **ITEM.category** | `category` VARCHAR(50) 하드코딩 | **`category_id` BIGINT FK** → ITEM_CATEGORY.id 참조 | 카테고리 코드 정규화 (VARCHAR → FK) |
+| **RULE_CATEGORY 테이블** | 없음 | **테이블 신규 추가** (id, name, is_active, created_at, updated_at) | 병원 규칙 카테고리 동적 관리를 위해 정규화 |
+| **HOSPITAL_RULE.category** | `category` VARCHAR(50) 하드코딩 | **`category_id` BIGINT FK** → RULE_CATEGORY.id 참조 | 카테고리 코드 정규화 (VARCHAR → FK) |
 
 ---
 
@@ -570,12 +667,10 @@ CANCELLED → 어떤 상태  : 금지 — 취소 후 복구 불가
 - Service 레이어에서 사전 조회 후 명확한 오류 메시지 반환 (사용자 경험)
 - DB UNIQUE 제약 `(doctor_id, reservation_date, time_slot)`으로 최후 방어 (데이터 정합성)
 
-**④ HOSPITAL_RULE과 LLM_RECOMMENDATION 독립 설계**
+**④ HOSPITAL_RULE 카테고리 정규화 & LLM_RECOMMENDATION 독립 설계**
 
-두 테이블은 다른 테이블과 FK 관계를 갖지 않는다.
-
-- `HOSPITAL_RULE`: 순수 텍스트 데이터. `LlmService`에서 조회 후 프롬프트에 문자열로 주입.
-- `LLM_RECOMMENDATION`: 비회원 추천 이력. `PATIENT`와 연결하지 않는 이유는 추천 시점에 아직 `PATIENT`가 생성되기 전이기 때문.
+- `HOSPITAL_RULE`: `RULE_CATEGORY` 테이블과 FK 관계(`category_id`)를 갖는다. 카테고리를 동적으로 관리하며, 챗봇 프롬프트 주입 시 JOIN 쿼리로 카테고리명과 함께 조회한다.
+- `LLM_RECOMMENDATION`: 다른 테이블과 FK 관계를 갖지 않는다(독립). `PATIENT`와 연결하지 않는 이유는 추천 시점에 아직 `PATIENT`가 생성되기 전이기 때문.
 
 **⑤ TreatmentRecord + Reservation 트랜잭션 묶음 처리**
 
@@ -598,7 +693,7 @@ reservation.updateStatus(ReservationStatus.COMPLETED);
 6. LLM_RECOMMENDATION.is_used = TRUE 업데이트
 
 [규칙 Q&A 챗봇 흐름]
-1. HOSPITAL_RULE: is_active=TRUE 전체 조회 → 시스템 프롬프트 주입
+1. HOSPITAL_RULE + RULE_CATEGORY: is_active=TRUE 규칙을 카테고리명과 함께 JOIN 조회 → 시스템 프롬프트 주입
 2. Claude API 호출 → 자연어 답변 수신
 3. CHATBOT_HISTORY: 질문·답변 이력 저장
 ```
@@ -627,6 +722,12 @@ CREATE UNIQUE INDEX idx_staff_username ON staff(username);
 
 -- 직원 사번 조회 성능
 CREATE UNIQUE INDEX idx_staff_employee_number ON staff(employee_number);
+
+-- 물품 카테고리 조회 성능
+CREATE INDEX idx_item_category ON item(category_id);
+
+-- 규칙 카테고리 조회 성능
+CREATE INDEX idx_rule_category ON hospital_rule(category_id);
 
 -- 규칙 챗봇 조회 성능
 CREATE INDEX idx_rule_active ON hospital_rule(is_active);
@@ -658,10 +759,10 @@ com.hospital.domain
 │   └─ TreatmentRecord.java
 ├─ inventory
 │   ├─ Item.java
-│   └─ ItemCategory.java         (Enum: MEDICAL_SUPPLIES, MEDICAL_EQUIPMENT, GENERAL_SUPPLIES)
+│   └─ ItemCategory.java         (Entity: ITEM_CATEGORY 테이블 매핑 — 카테고리 동적 관리)
 └─ llm
     ├─ HospitalRule.java
-    ├─ HospitalRuleCategory.java  (Enum: EMERGENCY, SUPPLY, DUTY, HYGIENE, OTHER)
+    ├─ RuleCategory.java           (Entity: RULE_CATEGORY 테이블 매핑 — 카테고리 동적 관리)
     ├─ LlmRecommendation.java
     └─ ChatbotHistory.java
 ```
@@ -678,8 +779,10 @@ com.hospital.domain
 | `DOCTOR` | 소수 | 의사 진료 부가 정보 | STAFF, DEPARTMENT | 프롬프트 주입 소스 |
 | `RESERVATION` | 다수 | 예약 중심·상태 흐름 | PATIENT, DOCTOR, DEPARTMENT | 추천 연결 대상 |
 | `TREATMENT_RECORD` | 다수 | 진료 기록 | RESERVATION, DOCTOR | 없음 |
-| `ITEM` | 소수 | 물품·재고 관리 | 없음 | 없음 |
-| `HOSPITAL_RULE` | 소수 | 병원 규칙 문서 | **없음 (독립)** | **챗봇 컨텍스트** |
+| `ITEM_CATEGORY` | 소수 | 물품 카테고리 관리 | ITEM | 없음 |
+| `ITEM` | 소수 | 물품·재고 관리 | ITEM_CATEGORY | 없음 |
+| `RULE_CATEGORY` | 소수 | 병원 규칙 카테고리 관리 | HOSPITAL_RULE | 없음 |
+| `HOSPITAL_RULE` | 소수 | 병원 규칙 문서 | RULE_CATEGORY | **챗봇 컨텍스트** |
 | `LLM_RECOMMENDATION` | 다수 | 증상 추천 이력 | **없음 (독립)** | **추천 이력 저장** |
 | `CHATBOT_HISTORY` | 다수 | 챗봇 대화 이력 | STAFF | **대화 이력 저장** |
 
