@@ -1,4 +1,4 @@
-# 개발자 A -- 상세 일정표
+# 개발자 A(강태오) -- 상세 일정표
 
 > **역할:** 비회원 메인, 외부 예약 폼, 증상 입력 UI, 추천 결과 화면
 > **담당 URL:** `/`, `/reservation/**`
@@ -12,7 +12,7 @@
 ## W1 -- 홈 화면 & 기본 UI 구성
 
 > **목표:** 비회원 메인 화면 완성, 공통 레이아웃 적용 확인
-> **의존:** 책임개발자의 Entity·LayoutModelInterceptor 완성 (W1 후반)
+> **의존:** 책임개발자(김민구)의 Entity·LayoutModelInterceptor 완성 (W1 후반)
 
 ### W1 전반 (Day 1~2)
 
@@ -41,7 +41,7 @@
 ## W2 -- 외부 예약 폼 전체 완성
 
 > **목표:** 직접 선택 예약 전체 흐름 완성 (폼 -> 슬롯 선택 -> 생성 -> 완료)
-> **의존:** 책임개발자의 SlotService (W1에 develop 머지됨) -- pull 후 사용
+> **의존:** 책임개발자(김민구)의 SlotService (W1에 develop 머지됨) -- pull 후 사용
 
 ### W2 전반 (Day 1~3)
 
@@ -61,7 +61,7 @@
 | 7 | `PatientRepository` 구현 | Patient findOrCreate 로직 | 기존 환자 조회 또는 신규 생성 |
 | 8 | @Valid 유효성 검증 추가 | `ReservationCreateRequest` DTO | 빈 이름·전화번호 시 에러 메시지 표시 |
 | 9 | **단위 테스트 작성** | `ReservationServiceTest`, `ReservationRepositoryTest` | 예약 생성, 중복 방지, 페이징 테스트 통과 |
-| 10 | PR 제출 & 리뷰 반영 | `feature/reservation` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 10 | PR 제출 & 리뷰 반영 | `feature/reservation` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 
 ### W2 테스트
 
@@ -118,7 +118,7 @@
 ## W4 -- LLM 연결 완성 & 최종 마무리
 
 > **목표:** LlmService 연동으로 증상 추천 기능 완성
-> **의존:** 책임개발자의 LlmService develop 머지 (W4 Day 1) + SymptomRequest/Response DTO
+> **의존:** 책임개발자(김민구)의 LlmService develop 머지 (W4 Day 1) + SymptomRequest/Response DTO
 
 ### W4 전반 (Day 1~3)
 
@@ -136,7 +136,7 @@
 | 5 | 면책 고지 문구 최종 확인 | 고지 문구 위치·스타일 | 추천 결과 화면에 고지 문구 항상 표시 |
 | 6 | 폴백 동작 최종 검증 | API 실패 시나리오 | 타임아웃·서버 에러 시 직접 선택 전환 동작 |
 | 7 | 버그 수정 & UI 정리 | 최종 코드 정리 | 전체 예약 흐름 재검증 |
-| 8 | PR 제출 & 리뷰 반영 | `feature/llm-symptom-ui` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 8 | PR 제출 & 리뷰 반영 | `feature/llm-symptom-ui` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 | 9 | 배포 지원 | 배포 환경 확인 | 운영 서버에서 예약 흐름 동작 확인 |
 
 ### W4 체크포인트
@@ -154,9 +154,9 @@
 
 | 파일/디렉터리 | 소유자 | 접근 수준 |
 |---------------|--------|-----------|
-| `config/SecurityConfig.java` | 책임개발자 | 읽기 전용 |
-| `domain/*.java` (Entity) | 책임개발자 | 접근 금지 (수정 시 Issue 등록) |
-| `common/service/SlotService.java` | 책임개발자 | 인터페이스 호출만 허용 |
-| `llm/LlmService.java` | 책임개발자 | 인터페이스 호출만 허용 |
-| `staff/**`, `doctor/**`, `nurse/**` | 개발자 B | 접근 금지 |
-| `admin/**` | 개발자 C | 접근 금지 |
+| `config/SecurityConfig.java` | 책임개발자(김민구) | 읽기 전용 |
+| `domain/*.java` (Entity) | 책임개발자(김민구) | 접근 금지 (수정 시 Issue 등록) |
+| `common/service/SlotService.java` | 책임개발자(김민구) | 인터페이스 호출만 허용 |
+| `llm/LlmService.java` | 책임개발자(김민구) | 인터페이스 호출만 허용 |
+| `staff/**`, `doctor/**`, `nurse/**` | 개발자 B(조유지) | 접근 금지 |
+| `admin/**` | 개발자 C(강상민) | 접근 금지 |

@@ -1,4 +1,4 @@
-# 개발자 C -- 상세 일정표
+# 개발자 C(강상민) -- 상세 일정표
 
 > **역할:** 관리자 화면 전체, 물품 CRUD, 병원 규칙 CRUD, 전체 접수 목록, 진료과 상세
 > **담당 URL:** `/admin/**`
@@ -13,7 +13,7 @@
 ## W1 -- 관리자 대시보드 골격 구성
 
 > **목표:** 관리자 대시보드 기본 골격 완성, ADMIN 레이아웃 적용 확인
-> **의존:** 책임개발자의 Entity·LayoutModelInterceptor 완성 (W1 후반)
+> **의존:** 책임개발자(김민구)의 Entity·LayoutModelInterceptor 완성 (W1 후반)
 
 ### W1 전반 (Day 1~2)
 
@@ -41,7 +41,7 @@
 ## W2 -- 예약 관리 & 직원·진료과 CRUD
 
 > **목표:** 예약 목록 조회·취소, 직원 CRUD, 진료과 CRUD 완성
-> **의존:** 책임개발자의 Entity (W1에 develop 머지됨)
+> **의존:** 책임개발자(김민구)의 Entity (W1에 develop 머지됨)
 
 ### W2 전반 (Day 1~3)
 
@@ -63,7 +63,7 @@
 | 9 | 진료과 상세(26) 구현 | `GET/POST /admin/department/**` | 진료과 등록·수정·상세 |
 | 10 | @Valid 유효성 검증 추가 | 직원·진료과 DTO | 빈 필드 에러 메시지 표시 |
 | 11 | **단위 테스트 작성** | `AdminStaffServiceTest`, `AdminDepartmentServiceTest` | CRUD, 중복 방지, 비밀번호 암호화 테스트 |
-| 12 | PR 제출 & 리뷰 반영 | `feature/admin-staff`, `feature/admin-department` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 12 | PR 제출 & 리뷰 반영 | `feature/admin-staff`, `feature/admin-department` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 
 ### W2 테스트
 
@@ -110,7 +110,7 @@
 | 7 | RESTful API: 물품 삭제 | `DELETE /api/items/{id}` | JSON 응답 기반 물품 삭제 |
 | 8 | 규칙 CRUD 골격(30) 시작 | `AdminRuleController` 기본 구조 | 규칙 목록 화면 렌더링 |
 | 9 | **단위 테스트 작성** | `AdminItemServiceTest`, `HospitalRuleServiceTest` | 물품 CRUD, 활성 규칙 조회 |
-| 10 | PR 제출 & 리뷰 반영 | `feature/admin-item` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 10 | PR 제출 & 리뷰 반영 | `feature/admin-item` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 
 ### W3 테스트
 
@@ -136,7 +136,7 @@
 ## W4 -- 규칙 CRUD 완성 & 전체 UI 정리
 
 > **목표:** 병원 규칙 CRUD 완성, 전체 관리자 화면 최종 점검
-> **의존:** 없음 (규칙 CRUD는 독립 작업, 챗봇 연동은 책임개발자·개발자 B 담당)
+> **의존:** 없음 (규칙 CRUD는 독립 작업, 챗봇 연동은 책임개발자(김민구)·개발자 B(조유지) 담당)
 
 ### W4 전반 (Day 1~3)
 
@@ -154,8 +154,8 @@
 |------|------|--------|-----------|
 | 6 | 전체 관리자 화면 UI 점검 | 16개 화면 전수 검사 | 레이아웃·페이징·검색·필터 정상 동작 |
 | 7 | 통계 대시보드 최종 검증 | 통계 4종 정확성 | DB 데이터 기준 정확한 집계 |
-| 8 | 버그 수정 | 통합 테스트 발견 이슈 수정 | 책임개발자 리포트 기준 |
-| 9 | PR 제출 & 리뷰 반영 | `feature/admin-rule` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 8 | 버그 수정 | 통합 테스트 발견 이슈 수정 | 책임개발자(김민구) 리포트 기준 |
+| 9 | PR 제출 & 리뷰 반영 | `feature/admin-rule` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 | 10 | 배포 지원 | 배포 환경 확인 | 운영 서버에서 관리자 전체 기능 동작 확인 |
 
 ### W4 테스트
@@ -194,10 +194,10 @@
 
 | 파일/디렉터리 | 소유자 | 접근 수준 |
 |---------------|--------|-----------|
-| `config/SecurityConfig.java` | 책임개발자 | 읽기 전용 |
-| `domain/*.java` (Entity) | 책임개발자 | 접근 금지 (수정 시 Issue 등록) |
-| `common/service/SlotService.java` | 책임개발자 | 인터페이스 호출만 허용 |
-| `llm/LlmService.java` | 책임개발자 | 접근 금지 |
-| `reservation/**` | 개발자 A | 접근 금지 |
-| `staff/**`, `doctor/**`, `nurse/**` | 개발자 B | 접근 금지 |
-| `ReservationRepository` | 개발자 A | 읽기 전용 (조회만 허용), `save()` 호출 금지 |
+| `config/SecurityConfig.java` | 책임개발자(김민구) | 읽기 전용 |
+| `domain/*.java` (Entity) | 책임개발자(김민구) | 접근 금지 (수정 시 Issue 등록) |
+| `common/service/SlotService.java` | 책임개발자(김민구) | 인터페이스 호출만 허용 |
+| `llm/LlmService.java` | 책임개발자(김민구) | 접근 금지 |
+| `reservation/**` | 개발자 A(강태오) | 접근 금지 |
+| `staff/**`, `doctor/**`, `nurse/**` | 개발자 B(조유지) | 접근 금지 |
+| `ReservationRepository` | 개발자 A(강태오) | 읽기 전용 (조회만 허용), `save()` 호출 금지 |

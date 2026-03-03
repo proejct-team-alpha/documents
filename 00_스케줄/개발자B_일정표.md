@@ -1,4 +1,4 @@
-# 개발자 B -- 상세 일정표
+# 개발자 B(조유지) -- 상세 일정표
 
 > **역할:** STAFF·DOCTOR·NURSE 대시보드, 방문 접수, 접수 처리, 진료 기록, 챗봇 UI 컴포넌트
 > **담당 URL:** `/staff/**`, `/doctor/**`, `/nurse/**`
@@ -12,7 +12,7 @@
 ## W1 -- STAFF 로그인 & 대시보드 골격
 
 > **목표:** STAFF 로그인 동선 확인, 대시보드 기본 골격 구현
-> **의존:** 책임개발자의 SecurityConfig·LayoutModelInterceptor 완성 (W1 후반)
+> **의존:** 책임개발자(김민구)의 SecurityConfig·LayoutModelInterceptor 완성 (W1 후반)
 
 ### W1 전반 (Day 1~2)
 
@@ -40,7 +40,7 @@
 ## W2 -- 접수 처리 & 방문 접수 전체 완성
 
 > **목표:** 접수 목록 -> 접수 처리, 방문 접수, 전화 예약 전체 완성
-> **의존:** 책임개발자의 SlotService (W1에 develop 머지됨) -- 방문 접수에서 사용
+> **의존:** 책임개발자(김민구)의 SlotService (W1에 develop 머지됨) -- 방문 접수에서 사용
 
 ### W2 전반 (Day 1~3)
 
@@ -59,7 +59,7 @@
 | 6 | 방문 접수(10) 구현 | `WalkinController`, `WalkinService` | Patient 생성 + Reservation(RECEIVED) 단일 트랜잭션 |
 | 7 | @Valid 유효성 검증 추가 | 접수·방문접수 DTO | 빈 필드 에러 메시지 표시 |
 | 8 | **단위 테스트 작성** | `ReceptionServiceTest` | RESERVED->RECEIVED 전이, 역방향 차단 |
-| 9 | PR 제출 & 리뷰 반영 | `feature/reception`, `feature/walkin` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 9 | PR 제출 & 리뷰 반영 | `feature/reception`, `feature/walkin` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 
 ### W2 테스트
 
@@ -128,7 +128,7 @@
 ## W4 -- 챗봇 UI 완성 & 최종 마무리
 
 > **목표:** 병원 규칙 Q&A 챗봇 UI 완성, 대화 이력 저장 연결
-> **의존:** 책임개발자의 LlmService develop 머지 (W4 Day 1) + ChatbotRequest/Response DTO
+> **의존:** 책임개발자(김민구)의 LlmService develop 머지 (W4 Day 1) + ChatbotRequest/Response DTO
 
 ### W4 전반 (Day 1~3)
 
@@ -146,8 +146,8 @@
 | 5 | 챗봇 접근 권한 확인 | DOCTOR/NURSE 화면에서만 표시 | STAFF/ADMIN 화면에서 챗봇 버튼 미표시 |
 | 6 | 챗봇 에러 처리 | API 실패 시 안내 메시지 | "잠시 후 다시 시도해 주세요" 메시지 표시 |
 | 7 | 전체 UI 최종 점검 | STAFF·DOCTOR·NURSE 전체 화면 | 모든 화면 레이아웃·기능 정상 동작 |
-| 8 | 버그 수정 | 통합 테스트 발견 이슈 수정 | 책임개발자 리포트 기준 |
-| 9 | PR 제출 & 리뷰 반영 | `feature/llm-chatbot-ui` -> `develop` PR | 책임개발자 리뷰 승인 |
+| 8 | 버그 수정 | 통합 테스트 발견 이슈 수정 | 책임개발자(김민구) 리포트 기준 |
+| 9 | PR 제출 & 리뷰 반영 | `feature/llm-chatbot-ui` -> `develop` PR | 책임개발자(김민구) 리뷰 승인 |
 | 10 | 배포 지원 | 배포 환경 확인 | 운영 서버에서 접수·진료·챗봇 동작 확인 |
 
 ### W4 체크포인트
@@ -167,9 +167,9 @@
 
 | 파일/디렉터리 | 소유자 | 접근 수준 |
 |---------------|--------|-----------|
-| `config/SecurityConfig.java` | 책임개발자 | 읽기 전용 |
-| `domain/*.java` (Entity) | 책임개발자 | 접근 금지 (수정 시 Issue 등록) |
-| `common/service/SlotService.java` | 책임개발자 | 인터페이스 호출만 허용 |
-| `llm/LlmService.java` | 책임개발자 | 인터페이스 호출만 허용 |
-| `reservation/**` | 개발자 A | 접근 금지 |
-| `admin/**` | 개발자 C | 접근 금지 |
+| `config/SecurityConfig.java` | 책임개발자(김민구) | 읽기 전용 |
+| `domain/*.java` (Entity) | 책임개발자(김민구) | 접근 금지 (수정 시 Issue 등록) |
+| `common/service/SlotService.java` | 책임개발자(김민구) | 인터페이스 호출만 허용 |
+| `llm/LlmService.java` | 책임개발자(김민구) | 인터페이스 호출만 허용 |
+| `reservation/**` | 개발자 A(강태오) | 접근 금지 |
+| `admin/**` | 개발자 C(강상민) | 접근 금지 |
