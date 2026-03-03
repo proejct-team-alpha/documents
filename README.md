@@ -113,6 +113,7 @@
 | 문서 | 버전 | 설명 |
 |------|------|------|
 | [스토리보드 v1](08_스토리보드/🏥_병원_예약_&_내부_업무_시스템_—_스토리보드.pptx) | v1.0 | 화면 와이어프레임·UI 목업 (56슬라이드, 33+4개 화면) |
+| [스토리보드 v1 (Google Slides)](https://docs.google.com/presentation/d/1MVNUwXvFvgO2OfNMf9WczRdt-wmj2RSXx32qRBQ2edQ/edit?usp=sharing) | v1.0 | 온라인 뷰어 |
 
 ---
 

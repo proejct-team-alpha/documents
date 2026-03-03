@@ -240,6 +240,8 @@ public String create(@Valid ReservationCreateRequest req,
 |-----|------|-----------|
 | `ReservationCreateRequest` | `patientName` | `@NotBlank`, `@Size(max=50)` |
 | `ReservationCreateRequest` | `patientPhone` | `@NotBlank`, `@Pattern(regexp="^\\d{2,3}-\\d{3,4}-\\d{4}$")` |
+| `ReservationCreateRequest` | `patientBirthDate` | 선택, 형식 `yyyy-MM-dd` |
+| `ReservationCreateRequest` | `patientGender` | 선택, `1`(남)/`2`(여)/`9`(미상) |
 | `ReservationCreateRequest` | `departmentId` | `@NotNull` |
 | `ReservationCreateRequest` | `doctorId` | `@NotNull` |
 | `ReservationCreateRequest` | `reservationDate` | `@NotNull`, `@Future` |
@@ -532,6 +534,8 @@ POST /reservation/create
 |------|------|------|------|
 | `patientName` | String | ✅ | 환자 성명 |
 | `patientPhone` | String | ✅ | 연락처 |
+| `patientBirthDate` | String | 선택 | 생년월일 (yyyy-MM-dd) |
+| `patientGender` | String | 선택 | 성별 (1=남, 2=여, 9=미상) |
 | `patientEmail` | String | 선택 | 이메일 |
 | `departmentId` | Long | ✅ | 진료과 ID |
 | `doctorId` | Long | ✅ | 의사 ID |
@@ -812,6 +816,8 @@ POST /staff/reservation/create
 |------|------|------|------|
 | `patientName` | String | ✅ | 환자 이름 |
 | `patientPhone` | String | ✅ | 연락처 |
+| `patientBirthDate` | String | 선택 | 생년월일 (yyyy-MM-dd) |
+| `patientGender` | String | 선택 | 성별 (1=남, 2=여, 9=미상) |
 | `patientEmail` | String | 선택 | 이메일 |
 | `departmentId` | Long | ✅ | 진료과 ID |
 | `doctorId` | Long | ✅ | 의사 ID |
@@ -880,6 +886,8 @@ POST /staff/walkin/create
 |------|------|------|------|
 | `patientName` | String | ✅ | 환자 이름 |
 | `patientPhone` | String | ✅ | 연락처 |
+| `patientBirthDate` | String | 선택 | 생년월일 (yyyy-MM-dd) |
+| `patientGender` | String | 선택 | 성별 (1=남, 2=여, 9=미상) |
 | `patientEmail` | String | 선택 | 이메일 |
 | `address` | String | 선택 | 주소 |
 | `note` | String | 선택 | 특이사항 |
@@ -1248,7 +1256,7 @@ POST /nurse/patient/update
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 환자 기본 정보 수정 (이름, 연락처, 특이사항) |
+| 설명 | 환자 기본 정보 수정 (이름, 연락처, 생년월일, 성별, 특이사항) |
 | 인증 | ROLE_NURSE, ROLE_ADMIN |
 
 **Request Body**
@@ -1258,6 +1266,8 @@ POST /nurse/patient/update
 | `patientId` | Long | ✅ | 환자 ID |
 | `name` | String | ✅ | 환자 성명 |
 | `phone` | String | ✅ | 연락처 |
+| `birthDate` | String | 선택 | 생년월일 (yyyy-MM-dd) |
+| `gender` | String | 선택 | 성별 (1=남, 2=여, 9=미상) |
 | `note` | String | 선택 | 특이사항 |
 
 **성공 처리**
@@ -2616,6 +2626,8 @@ POST /api/patients/{id}/update
 {
   "name": "홍길동",
   "phone": "010-1234-5678",
+  "birthDate": "1990-05-15",
+  "gender": "1",
   "note": "약물 알레르기 있음"
 }
 ```
@@ -2624,6 +2636,8 @@ POST /api/patients/{id}/update
 |------|------|------|------|
 | `name` | String | 선택 | 환자 성명 |
 | `phone` | String | 선택 | 연락처 |
+| `birthDate` | String | 선택 | 생년월일 (yyyy-MM-dd) |
+| `gender` | String | 선택 | 성별 (1=남, 2=여, 9=미상) |
 | `note` | String | 선택 | 특이사항 |
 
 **응답 JSON (200 OK)**
@@ -2635,6 +2649,8 @@ POST /api/patients/{id}/update
     "patientId": 10,
     "name": "홍길동",
     "phone": "010-1234-5678",
+    "birthDate": "1990-05-15",
+    "gender": "1",
     "note": "약물 알레르기 있음"
   },
   "message": "환자 정보가 수정되었습니다."

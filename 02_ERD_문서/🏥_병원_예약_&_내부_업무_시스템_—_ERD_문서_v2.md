@@ -136,6 +136,8 @@ erDiagram
 | `id` | BIGINT | PK, AUTO_INCREMENT | 환자 고유 ID |
 | `name` | VARCHAR(50) | NOT NULL | 성명 |
 | `phone` | VARCHAR(20) | NOT NULL | 연락처 |
+| `birth_date` | DATE | NULL | 생년월일 (선택 입력, 예: 2000-01-01) |
+| `gender` | CHAR(1) | NULL | 성별 (1=남, 2=여, 9=미상 — 주민번호 7번째 자리와 동일) |
 | `email` | VARCHAR(100) | NULL | 이메일 (선택 입력) |
 | `address` | VARCHAR(255) | NULL | 주소 — 접수 단계(ROLE_STAFF)에서 추가 입력 |
 | `note` | VARCHAR(500) | NULL | 특이사항 — 접수 단계에서 추가 입력 |
@@ -143,6 +145,7 @@ erDiagram
 
 **설계 포인트**
 
+- `birth_date`, `gender`는 선택 입력. 주민번호 7번째 자리(200001011 → 2000-01-01, 1=남) 형식과 호환된다.
 - `address`, `note`는 외부 예약 시 NULL. `ROLE_STAFF`의 접수 처리 단계에서 UPDATE된다.
 - 동명이인 구분이 어려우므로 `phone`을 준식별자로 활용하는 것을 권장한다.
 - LLM 증상 추천 흐름에서 환자가 예약을 확정할 때 이 테이블에 레코드가 생성된다.
