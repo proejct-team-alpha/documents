@@ -22,8 +22,8 @@
 9. [관리자 — 예약·환자 API (ROLE_ADMIN)](#9-관리자--예약환자-api-role_admin)
 10. [관리자 — 인사 관리 API (ROLE_ADMIN)](#10-관리자--인사-관리-api-role_admin)
 11. [관리자 — 진료과 API (ROLE_ADMIN)](#11-관리자--진료과-api-role_admin)
-12. [관리자 — 물품 관리 API (ROLE_ADMIN)](#12-관리자--물품-관리-api-role_admin)
-13. [관리자 — 물품 카테고리 관리 API (ROLE_ADMIN)](#13-관리자--물품-카테고리-관리-api-role_admin)
+12. [물품 관리자 — 물품 관리 API (ROLE_ITEM_MANAGER)](#12-물품-관리자--물품-관리-api-role_item_manager)
+13. [물품 관리자 — 물품 카테고리 관리 API (ROLE_ITEM_MANAGER)](#13-물품-관리자--물품-카테고리-관리-api-role_item_manager)
 14. [관리자 — 규칙 카테고리 관리 API (ROLE_ADMIN)](#14-관리자--규칙-카테고리-관리-api-role_admin)
 15. [관리자 — 병원 규칙 API (ROLE_ADMIN)](#15-관리자--병원-규칙-api-role_admin)
 16. [관리자 — 대시보드 API (ROLE_ADMIN)](#16-관리자--대시보드-api-role_admin)
@@ -69,6 +69,7 @@ http://{host}:{port}
 | `/doctor/**` | ROLE_DOCTOR | 세션 필요 |
 | `/nurse/**` | ROLE_NURSE | 세션 필요 |
 | `/admin/**` | ROLE_ADMIN | 세션 필요 |
+| `/item-manager/**` | ROLE_ITEM_MANAGER | 세션 필요 |
 | `/api/**` | RESTful API (역할별 인증) | 세션 필요 |
 | `/llm/**` | LLM 비동기 호출 | 세션 필요 (DOCTOR, NURSE) / 불필요 (환자 증상) |
 
@@ -187,7 +188,7 @@ PBL 최소 요구사항 충족을 위해, 기존 SSR PRG 패턴 외에 별도 `/
 | `POST` | `/api/staff/{id}/update` | 직원 정보 수정 | ROLE_ADMIN |
 | `POST` | `/api/patients/{id}/update` | 환자 정보 수정 | ROLE_NURSE, ROLE_ADMIN |
 | `POST` | `/api/reservations/{id}/cancel` | 예약 취소 | ROLE_ADMIN |
-| `POST` | `/api/items/{id}/delete` | 물품 삭제 | ROLE_ADMIN |
+| `POST` | `/api/items/{id}/delete` | 물품 삭제 | ROLE_ITEM_MANAGER |
 | `POST` | `/api/rules/{id}/delete` | 규칙 삭제 | ROLE_ADMIN |
 
 > 상세 요청/응답은 [15. JSON API 레이어](#15-json-api-레이어-api) 참조.
@@ -2048,18 +2049,18 @@ POST /admin/department/activate
 
 ---
 
-## 12. 관리자 — 물품 관리 API (ROLE_ADMIN)
+## 12. 물품 관리자 — 물품 관리 API (ROLE_ITEM_MANAGER)
 
 ### 12.1 물품 목록 화면
 
 ```
-GET /admin/item/list
+GET /item-manager/item/list
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 전체 물품 목록 화면 렌더링 (재고 부족 항목 강조 포함) |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Query Parameters**
 
@@ -2069,7 +2070,7 @@ GET /admin/item/list
 | `keyword` | String | 선택 | 물품명 검색 (부분 일치) |
 | `stockStatus` | String | 선택 | 재고 상태 (shortage/normal/all, 기본값: all) |
 
-**컨트롤러 반환**: `"admin/item/list"`
+**컨트롤러 반환**: `"item-manager/item/list"`
 
 **Request Attributes**
 
@@ -2087,15 +2088,15 @@ GET /admin/item/list
 ### 12.2 물품 등록 화면
 
 ```
-GET /admin/item/new
+GET /item-manager/item/new
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 물품 등록 폼 렌더링 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
-**컨트롤러 반환**: `"admin/item/new"`
+**컨트롤러 반환**: `"item-manager/item/new"`
 
 **Request Attributes**
 
@@ -2111,13 +2112,13 @@ GET /admin/item/new
 ### 12.3 물품 등록 처리
 
 ```
-POST /admin/item/create
+POST /item-manager/item/create
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 새 물품 등록 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2132,28 +2133,28 @@ POST /admin/item/create
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/item/list` |
+| 반환 | `redirect:/item-manager/item/list` |
 | Flash | `successMessage` = `"물품이 등록되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `VALIDATION_ERROR` | `"admin/item/new"` | `errorCode`, `errorMessage`, `inputData`, `categories` |
-| `RESOURCE_NOT_FOUND` | `"admin/item/new"` | `errorCode`, `errorMessage` — 존재하지 않는 categoryId |
+| `VALIDATION_ERROR` | `"item-manager/item/new"` | `errorCode`, `errorMessage`, `inputData`, `categories` |
+| `RESOURCE_NOT_FOUND` | `"item-manager/item/new"` | `errorCode`, `errorMessage` — 존재하지 않는 categoryId |
 
 ---
 
 ### 12.4 물품 상세·수정 화면
 
 ```
-GET /admin/item/detail
+GET /item-manager/item/detail
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 물품 상세 정보 조회 및 수정 폼 렌더링 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Query Parameters**
 
@@ -2161,7 +2162,7 @@ GET /admin/item/detail
 |----------|------|------|------|
 | `itemId` | Long | ✅ | 물품 ID |
 
-**컨트롤러 반환**: `"admin/item/detail"`
+**컨트롤러 반환**: `"item-manager/item/detail"`
 
 **Request Attributes**
 
@@ -2178,15 +2179,15 @@ GET /admin/item/detail
 ### 12.5 물품 전체 정보 수정 처리
 
 ```
-POST /admin/item/update
+POST /item-manager/item/update
 ```
 
-> v2.0의 `POST /admin/item/updateQuantity` (수량만 수정)를 대체합니다.
+> v2.0의 `POST /item-manager/item/updateQuantity` (수량만 수정)를 대체합니다.
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 물품 이름·카테고리(ID)·현재 수량·최소 수량 전체 수정 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2202,28 +2203,28 @@ POST /admin/item/update
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/item/detail?itemId={itemId}` |
+| 반환 | `redirect:/item-manager/item/detail?itemId={itemId}` |
 | Flash | `successMessage` = `"물품 정보가 수정되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `RESOURCE_NOT_FOUND` | `"admin/item/list"` | `errorCode`, `errorMessage` |
-| `VALIDATION_ERROR` | `"admin/item/detail"` | `errorCode`, `errorMessage`, `item`, `categories` |
+| `RESOURCE_NOT_FOUND` | `"item-manager/item/list"` | `errorCode`, `errorMessage` |
+| `VALIDATION_ERROR` | `"item-manager/item/detail"` | `errorCode`, `errorMessage`, `item`, `categories` |
 
 ---
 
 ### 12.6 물품 삭제 처리
 
 ```
-POST /admin/item/delete
+POST /item-manager/item/delete
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 물품 삭제 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2235,29 +2236,29 @@ POST /admin/item/delete
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/item/list` |
+| 반환 | `redirect:/item-manager/item/list` |
 | Flash | `successMessage` = `"물품이 삭제되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `RESOURCE_NOT_FOUND` | `"admin/item/list"` | `errorCode`, `errorMessage` |
+| `RESOURCE_NOT_FOUND` | `"item-manager/item/list"` | `errorCode`, `errorMessage` |
 
 ---
 
-## 13. 관리자 — 물품 카테고리 관리 API (ROLE_ADMIN)
+## 13. 물품 관리자 — 물품 카테고리 관리 API (ROLE_ITEM_MANAGER)
 
 ### 13.1 카테고리 목록 화면
 
 ```
-GET /admin/category/list
+GET /item-manager/category/list
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 물품 카테고리 목록 화면 렌더링 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Query Parameters**
 
@@ -2266,7 +2267,7 @@ GET /admin/category/list
 | `keyword` | String | 선택 | 카테고리명 검색 (부분 일치) |
 | `isActive` | Boolean | 선택 | 활성 여부 필터 (기본값: 전체) |
 
-**컨트롤러 반환**: `"admin/category/list"`
+**컨트롤러 반환**: `"item-manager/category/list"`
 
 **Request Attributes**
 
@@ -2283,15 +2284,15 @@ GET /admin/category/list
 ### 13.2 카테고리 등록 화면
 
 ```
-GET /admin/category/new
+GET /item-manager/category/new
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 카테고리 등록 폼 렌더링 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
-**컨트롤러 반환**: `"admin/category/new"`
+**컨트롤러 반환**: `"item-manager/category/new"`
 
 **Request Attributes**
 
@@ -2306,13 +2307,13 @@ GET /admin/category/new
 ### 13.3 카테고리 등록 처리
 
 ```
-POST /admin/category/create
+POST /item-manager/category/create
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 새 카테고리 등록 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2324,28 +2325,28 @@ POST /admin/category/create
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/category/list` |
+| 반환 | `redirect:/item-manager/category/list` |
 | Flash | `successMessage` = `"카테고리가 등록되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `VALIDATION_ERROR` | `"admin/category/new"` | `errorCode`, `errorMessage`, `inputData` |
-| `DUPLICATE_ERROR` | `"admin/category/new"` | `errorCode`, `errorMessage`, `inputData` — 중복 카테고리명 |
+| `VALIDATION_ERROR` | `"item-manager/category/new"` | `errorCode`, `errorMessage`, `inputData` |
+| `DUPLICATE_ERROR` | `"item-manager/category/new"` | `errorCode`, `errorMessage`, `inputData` — 중복 카테고리명 |
 
 ---
 
 ### 13.4 카테고리 상세·수정 화면
 
 ```
-GET /admin/category/detail
+GET /item-manager/category/detail
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 카테고리 상세 정보 조회 및 수정 폼 렌더링 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Query Parameters**
 
@@ -2353,7 +2354,7 @@ GET /admin/category/detail
 |----------|------|------|------|
 | `categoryId` | Long | ✅ | 카테고리 ID |
 
-**컨트롤러 반환**: `"admin/category/detail"`
+**컨트롤러 반환**: `"item-manager/category/detail"`
 
 **Request Attributes**
 
@@ -2370,13 +2371,13 @@ GET /admin/category/detail
 ### 13.5 카테고리 수정 처리
 
 ```
-POST /admin/category/update
+POST /item-manager/category/update
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 카테고리명 수정 |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2389,29 +2390,29 @@ POST /admin/category/update
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/category/detail?categoryId={categoryId}` |
+| 반환 | `redirect:/item-manager/category/detail?categoryId={categoryId}` |
 | Flash | `successMessage` = `"카테고리가 수정되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `RESOURCE_NOT_FOUND` | `"admin/category/list"` | `errorCode`, `errorMessage` |
-| `VALIDATION_ERROR` | `"admin/category/detail"` | `errorCode`, `errorMessage`, `category` |
-| `DUPLICATE_ERROR` | `"admin/category/detail"` | `errorCode`, `errorMessage`, `category` — 중복 카테고리명 |
+| `RESOURCE_NOT_FOUND` | `"item-manager/category/list"` | `errorCode`, `errorMessage` |
+| `VALIDATION_ERROR` | `"item-manager/category/detail"` | `errorCode`, `errorMessage`, `category` |
+| `DUPLICATE_ERROR` | `"item-manager/category/detail"` | `errorCode`, `errorMessage`, `category` — 중복 카테고리명 |
 
 ---
 
 ### 13.6 카테고리 비활성화 처리
 
 ```
-POST /admin/category/deactivate
+POST /item-manager/category/deactivate
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 카테고리 비활성화 (is_active = FALSE). 카테고리 삭제 대신 비활성화하여 기존 물품의 FK 무결성을 유지한다. |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2423,27 +2424,27 @@ POST /admin/category/deactivate
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/category/list` |
+| 반환 | `redirect:/item-manager/category/list` |
 | Flash | `successMessage` = `"카테고리가 비활성화되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `RESOURCE_NOT_FOUND` | `"admin/category/list"` | `errorCode`, `errorMessage` |
+| `RESOURCE_NOT_FOUND` | `"item-manager/category/list"` | `errorCode`, `errorMessage` |
 
 ---
 
 ### 13.7 카테고리 활성화 처리
 
 ```
-POST /admin/category/activate
+POST /item-manager/category/activate
 ```
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 비활성화된 카테고리 재활성화 (is_active = TRUE) |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 
 **Request Body**
 
@@ -2455,14 +2456,14 @@ POST /admin/category/activate
 
 | 항목 | 내용 |
 |------|------|
-| 반환 | `redirect:/admin/category/list` |
+| 반환 | `redirect:/item-manager/category/list` |
 | Flash | `successMessage` = `"카테고리가 활성화되었습니다."` |
 
 **오류 처리**
 
 | 오류 코드 | 반환 뷰 | Attribute |
 |-----------|---------|-----------|
-| `RESOURCE_NOT_FOUND` | `"admin/category/list"` | `errorCode`, `errorMessage` |
+| `RESOURCE_NOT_FOUND` | `"item-manager/category/list"` | `errorCode`, `errorMessage` |
 
 ---
 
@@ -3157,7 +3158,7 @@ POST /api/items/{id}/delete
 | 항목 | 내용 |
 |------|------|
 | 설명 | 물품 삭제 (JSON API) |
-| 인증 | ROLE_ADMIN |
+| 인증 | ROLE_ITEM_MANAGER |
 | 반환 | `@ResponseBody` JSON |
 
 **Path Variable**
@@ -3365,28 +3366,28 @@ POST /api/rules/{id}/delete
 | 56 | POST | `/admin/department/deactivate` | redirect | 진료과 비활성화 처리 |
 | 57 | POST | `/admin/department/activate` | redirect | 진료과 활성화 처리 |
 
-### ROLE_ADMIN — 물품 관리
+### ROLE_ITEM_MANAGER — 물품 관리
 
 | # | 메서드 | URL | 반환 | 설명 |
 |---|--------|-----|------|------|
-| 58 | GET | `/admin/item/list` | `"admin/item/list"` | 물품 목록 화면 |
-| 59 | GET | `/admin/item/new` | `"admin/item/new"` | 물품 등록 화면 |
-| 60 | POST | `/admin/item/create` | redirect or 폼재렌더링 | 물품 등록 처리 |
-| 61 | GET | `/admin/item/detail` | `"admin/item/detail"` | 물품 상세·수정 화면 |
-| 62 | POST | `/admin/item/update` | redirect or 폼재렌더링 | 물품 전체 수정 처리 |
-| 63 | POST | `/admin/item/delete` | redirect | 물품 삭제 처리 |
+| 58 | GET | `/item-manager/item/list` | `"item-manager/item/list"` | 물품 목록 화면 |
+| 59 | GET | `/item-manager/item/new` | `"item-manager/item/new"` | 물품 등록 화면 |
+| 60 | POST | `/item-manager/item/create` | redirect or 폼재렌더링 | 물품 등록 처리 |
+| 61 | GET | `/item-manager/item/detail` | `"item-manager/item/detail"` | 물품 상세·수정 화면 |
+| 62 | POST | `/item-manager/item/update` | redirect or 폼재렌더링 | 물품 전체 수정 처리 |
+| 63 | POST | `/item-manager/item/delete` | redirect | 물품 삭제 처리 |
 
-### ROLE_ADMIN — 물품 카테고리 관리
+### ROLE_ITEM_MANAGER — 물품 카테고리 관리
 
 | # | 메서드 | URL | 반환 | 설명 |
 |---|--------|-----|------|------|
-| 64 | GET | `/admin/category/list` | `"admin/category/list"` | 물품 카테고리 목록 화면 |
-| 65 | GET | `/admin/category/new` | `"admin/category/new"` | 물품 카테고리 등록 화면 |
-| 66 | POST | `/admin/category/create` | redirect or 폼재렌더링 | 물품 카테고리 등록 처리 |
-| 67 | GET | `/admin/category/detail` | `"admin/category/detail"` | 물품 카테고리 상세·수정 화면 |
-| 68 | POST | `/admin/category/update` | redirect or 폼재렌더링 | 물품 카테고리 수정 처리 |
-| 69 | POST | `/admin/category/deactivate` | redirect | 물품 카테고리 비활성화 처리 |
-| 70 | POST | `/admin/category/activate` | redirect | 물품 카테고리 활성화 처리 |
+| 64 | GET | `/item-manager/category/list` | `"item-manager/category/list"` | 물품 카테고리 목록 화면 |
+| 65 | GET | `/item-manager/category/new` | `"item-manager/category/new"` | 물품 카테고리 등록 화면 |
+| 66 | POST | `/item-manager/category/create` | redirect or 폼재렌더링 | 물품 카테고리 등록 처리 |
+| 67 | GET | `/item-manager/category/detail` | `"item-manager/category/detail"` | 물품 카테고리 상세·수정 화면 |
+| 68 | POST | `/item-manager/category/update` | redirect or 폼재렌더링 | 물품 카테고리 수정 처리 |
+| 69 | POST | `/item-manager/category/deactivate` | redirect | 물품 카테고리 비활성화 처리 |
+| 70 | POST | `/item-manager/category/activate` | redirect | 물품 카테고리 활성화 처리 |
 
 ### ROLE_ADMIN — 규칙 카테고리 관리
 

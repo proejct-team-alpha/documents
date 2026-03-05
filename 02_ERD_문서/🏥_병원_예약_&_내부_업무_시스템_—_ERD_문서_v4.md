@@ -232,7 +232,8 @@ erDiagram
   - `S-20230401` = STAFF (원무/접수)
   - `N-20210812` = NURSE (간호사)
   - `A-20220601` = ADMIN (관리자)
-- 역할코드는 role의 첫 글자이며, YYYYMMDD는 입사일(또는 등록일)을 의미한다.
+  - `I-20240115` = ITEM_MANAGER (물품 관리자)
+- 역할코드는 role의 첫 글자이며, YYYYMMDD는 입사일(또는 등록일)을 의미한다. (ITEM_MANAGER의 역할코드는 `I`)
 
 **역할(ROLE) 코드**
 
@@ -242,6 +243,7 @@ erDiagram
 | `DOCTOR` | 의사 | `/doctor/**` | **병원 규칙 Q&A 챗봇** |
 | `NURSE` | 간호사 | `/nurse/**` | **병원 규칙 Q&A 챗봇** |
 | `STAFF` | 원무/접수 | `/staff/**` | 없음 (v1.1 예정) |
+| `ITEM_MANAGER` | 물품 관리자 | `/item-manager/**` | 없음 |
 
 ---
 
@@ -338,7 +340,7 @@ LLM_RECOMMENDATION.is_used = TRUE 로 업데이트
 ### 2.7 ITEM_CATEGORY — 물품 카테고리 ★ 신규 (v4.1)
 
 > 물품(`ITEM`)의 카테고리를 관리하는 코드 테이블.
-기존 `ITEM.category` VARCHAR 컬럼의 하드코딩 방식을 정규화하여, 관리자(`ROLE_ADMIN`)가 카테고리를 동적으로 추가·수정·비활성화할 수 있도록 분리하였다.
+기존 `ITEM.category` VARCHAR 컬럼의 하드코딩 방식을 정규화하여, 물품 관리자(`ROLE_ITEM_MANAGER`)가 카테고리를 동적으로 추가·수정·비활성화할 수 있도록 분리하였다.
 >
 
 | 컬럼명 | 타입 | 제약 | 설명 |
@@ -384,7 +386,7 @@ INSERT INTO item_category (name, is_active, created_at, updated_at) VALUES
 **재고 부족 판단 로직**
 
 ```sql
--- 관리자 대시보드 통계 쿼리 (단순 count)
+-- 물품 관리자 대시보드 / 관리자 대시보드 통계 쿼리 (단순 count)
 SELECT COUNT(*) FROM item WHERE quantity < min_quantity
 ```
 
@@ -592,6 +594,7 @@ CANCELLED → 어떤 상태  : 금지 — 취소 후 복구 불가
 | `DOCTOR` | 의사 | `/doctor/**` | 규칙 Q&A 챗봇 사용 |
 | `NURSE` | 간호사 | `/nurse/**` | 규칙 Q&A 챗봇 사용 |
 | `STAFF` | 원무/접수 | `/staff/**` | 없음 (v1.1 예정) |
+| `ITEM_MANAGER` | 물품 관리자 | `/item-manager/**` | 없음 |
 
 ### 4.4 ITEM 카테고리 (ITEM_CATEGORY 테이블 관리)
 
@@ -605,7 +608,7 @@ CANCELLED → 어떤 상태  : 금지 — 취소 후 복구 불가
 | `의료 장비` | 혈압계, 체온계, 심전도기 등 | 시드 데이터 |
 | `일반 소모품` | 사무용품, 청소용품 등 | 시드 데이터 |
 
-- 관리자(`ROLE_ADMIN`)가 카테고리 관리 화면에서 추가·수정·비활성화 가능
+- 물품 관리자(`ROLE_ITEM_MANAGER`)가 카테고리 관리 화면에서 추가·수정·비활성화 가능
 
 ### 4.5 HOSPITAL_RULE 카테고리 (RULE_CATEGORY 테이블 관리)
 
@@ -749,7 +752,7 @@ com.hospital.domain
 │   └─ Patient.java
 ├─ staff
 │   ├─ Staff.java
-│   ├─ StaffRole.java            (Enum: ADMIN, DOCTOR, NURSE, STAFF)
+│   ├─ StaffRole.java            (Enum: ADMIN, DOCTOR, NURSE, STAFF, ITEM_MANAGER)
 │   └─ Doctor.java
 ├─ department
 │   └─ Department.java

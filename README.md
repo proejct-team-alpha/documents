@@ -38,7 +38,7 @@
 **v4.3 핵심 요약:**
 
 - 비회원 증상 텍스트 입력 → Claude API 분석 → 진료과·의사·시간 추천
-- 내부 직원: 접수(STAFF), 진료(DOCTOR), 간호(NURSE), 관리(ADMIN)
+- 내부 직원: 접수(STAFF), 진료(DOCTOR), 간호(NURSE), 관리(ADMIN), **물품 관리(ITEM_MANAGER)**
 - 병원 규칙 Q&A 챗봇 (의사·간호사 화면)
 - PBL 필수: Redis 세션, RESTful API(PUT/PATCH/DELETE), @Valid 유효성 검증
 
