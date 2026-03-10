@@ -13,12 +13,11 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(wc -l \"d:/workspace/hms-doc/4_API_명세서/🏥_병원_예약_&_내부_업무_시스템_—_API_명세서_v5.md\")",
-      "Bash(python -m pip --version)",
-      "Bash(npm install --no-save pptxgenjs)",
-      "Bash(npm install --no-save jszip)",
-      "Bash(node -e \"const JSZip = require\\(''jszip''\\); console.log\\(''JSZip loaded:'', typeof JSZip\\);\")",
-      "Bash(node _scripts/modify-pptx.js)",
-      "Bash(node _scripts/verify-pptx.js)"
+      "Bash(python -c \":*)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c \":*)",
+      "Bash(PYTHONIOENCODING=utf-8 python fix_storyboard.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python fix_category_slides.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python fix_category_slides2.py)"
     ]
   }
 }
