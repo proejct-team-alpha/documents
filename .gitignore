@@ -1,1 +1,3 @@
 .omc/sessions/
+node_modules/**
+_scripts
