@@ -17,7 +17,9 @@
       "Bash(PYTHONIOENCODING=utf-8 python -c \":*)",
       "Bash(PYTHONIOENCODING=utf-8 python fix_storyboard.py)",
       "Bash(PYTHONIOENCODING=utf-8 python fix_category_slides.py)",
-      "Bash(PYTHONIOENCODING=utf-8 python fix_category_slides2.py)"
+      "Bash(PYTHONIOENCODING=utf-8 python fix_category_slides2.py)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
